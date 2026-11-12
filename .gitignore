@@ -1,0 +1,38 @@
+# R-sessioner
+.Rhistory
+.Rapp.history
+.RData
+.RDataTmp
+.Ruserdata
+.Renviron
+
+# RStudio
+.Rproj.user/
+
+# Paketbyggen och R CMD check
+*.tar.gz
+*.Rcheck/
+/doc/
+/Meta/
+inst/doc/
+
+# Byggda vignetter och R Markdown/Quarto-utdata
+vignettes/*.html
+vignettes/*.pdf
+vignettes/*.R
+*_cache/
+*_files/
+/.quarto/
+
+# Autentisering och publicering
+.httr-oauth
+rsconnect/
+
+# Lokala Claude-inställningar
+.claude/settings.local.json
+
+# Operativsystem
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

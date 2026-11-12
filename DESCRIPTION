@@ -1,0 +1,40 @@
+Package: funcVGRD3
+Type: Package
+Title: Interaktiva D3-diagram och kartor i VGR:s grafiska profil
+Version: 0.13.0
+Authors@R: c(
+    person(
+      "Christian", "Lindell",
+      email = "christian_lindell@yahoo.com",
+      role = c("aut", "cre")
+    ),
+    person(
+      "Mike", "Bostock",
+      role = "cph",
+      comment = "D3.js 7.9.0 i inst/js/lib (ISC-licens)"
+    )
+  )
+Description: Interaktiva versioner av diagram- och kartfunktionerna i funcVGR,
+    ritade med D3.js: koropletkartor, förändringskartor, täthetskartor,
+    linjediagram, stapeldiagram, hanteldiagram och cirkeldiagram. Funktionerna
+    har samma parametrar som func_graf_*-originalen plus interaktiva tillägg
+    (tooltip, zoom, tidsreglage, klickbar förklaring och export), visas i
+    RStudio:s Viewer och i R Markdown/Quarto, och kan sparas som fristående
+    HTML, PNG eller SVG.
+License: file LICENSE
+Encoding: UTF-8
+Language: sv
+LazyData: true
+Depends: R (>= 4.1.0)
+Imports: cli, dplyr, ggplot2, grDevices, htmltools, jsonlite, rlang,
+        scales, sf, stats, stringr, tidyr, tools, utils, viridis,
+        viridisLite
+Suggests: chromote, knitr, rmarkdown, systemfonts, webshot2
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.1
+NeedsCompilation: no
+Packaged: 2026-10-20 14:46:47 UTC; chrli81
+Author: Christian Lindell [aut, cre],
+  Mike Bostock [cph] (D3.js 7.9.0 i inst/js/lib (ISC-licens))
+Maintainer: Christian Lindell <christian_lindell@yahoo.com>

@@ -1,0 +1,346 @@
+---
+title: "Kom igång med funcVGRD3"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Kom igång med funcVGRD3}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", message = FALSE)
+
+# Läser exempelkoden från inst/examples så att vignetten alltid visar samma
+# exempel som hjälpsidorna
+exempel <- function(fn) {
+  fil <- file.path("..", "inst", "examples", paste0(fn, ".R"))
+  if (!file.exists(fil)) fil <- system.file("examples", paste0(fn, ".R"), package = "funcVGRD3")
+  readLines(fil, encoding = "UTF-8")
+}
+```
+
+funcVGRD3 ritar interaktiva diagram och kartor i VGR:s grafiska profil med D3.js. Varje
+funktion motsvarar en `func_graf_*`-funktion i funcVGR och har samma parametrar och
+standardvärden, så att ett befintligt anrop fungerar om man bara byter funktionsnamn, till
+exempel `func_graf_linjediagram()` mot `func_d3_linjediagram()`. Utöver originalens
+parametrar finns interaktiva tillägg: tooltip, zoom, klickbar förklaring, tidsreglage,
+rullistor med uppspelning och knappar för att ladda ned diagrammet som PNG eller SVG.
+
+Vignetten går först igenom hur diagrammen visas och sparas, sedan diagram- och
+kartfunktionerna och till sist `+`-syntaxen. Alla exempel använder påhittade siffror.
+Kartorna använder kommungränserna i paketets dataset `vg_kommuner`, så inget kräver nätverk
+eller inloggning. Diagrammen nedan är interaktiva: håll muspekaren över dem, klicka i
+förklaringen och prova knapparna.
+
+```{r}
+library(funcVGRD3)
+```
+
+## Hur diagrammen fungerar
+
+Alla diagramfunktioner returnerar ett objekt av klassen `vgr_d3`. Objektet sparar bara de
+argument du angett; diagrammet beräknas först när objektet skrivs ut. I RStudio visas det
+då i Viewer, och i ett R Markdown- eller Quarto-dokument hamnar det direkt i HTML-filen,
+som i den här vignetten. Alla beräkningar (klassgränser, etiketter, talformat) görs i R,
+och JavaScript ritar bara, så diagrammen ser ut som ggplot2-versionerna i funcVGR.
+
+Eftersom diagrammet beräknas sent går det att ändra inställningar i efterhand med `+`,
+t.ex. `p + d3_labs(title = "Ny rubrik")`. Det beskrivs i avsnittet
+[Bygga diagram med `+`](#bygga-diagram-med).
+
+## Diagram
+
+### Linjediagram
+
+`func_d3_linjediagram()` ritar en linje per grupp och passar för tidsserier. De
+obligatoriska parametrarna är `df`, `x_value` och `y_value`; x-axeln kan vara tal, datum
+eller kategorier, och med `group` blir det en linje per grupp. Tooltipen visar ett hårkors
+med alla linjer vid x-värdet, och knappar växlar mellan värde, index och procentuell
+förändring. Prognoser ritas streckade från `line_forecast_from`, med ett osäkerhetsband
+från `line_band_lower` och `line_band_upper`, och perioder kan skuggas med `x_shade_*`.
+`group_highlight` tonar ned alla grupper utom de valda, och `legend_direct = TRUE`
+skriver namnen vid linjernas slut i stället för i en förklaring. Med `tooltip_columns`
+visar tooltipen fler kolumner för varje punkt, t.ex. antalet kvinnor bland de
+sysselsatta. Samma parameter finns i stapel- och hanteldiagrammet och i kartorna.
+
+```{r, code = exempel("func_d3_linjediagram")}
+```
+
+Diagrammet med en linje per kommun (`p2` ovan):
+
+```{r}
+p2
+```
+
+### Stapeldiagram
+
+`func_d3_stapeldiagram()` ritar stående eller liggande staplar, med obligatoriska
+parametrarna `df`, `x_value` och `y_value`. Med `group` blir staplarna grupperade,
+staplade eller 100 % staplade (`bar_type`), och knappar ovanför diagrammet växlar mellan
+typerna. Funktionen kan också anropas som `func_d3_barchart()`, originalets namn.
+Tilläggen är bland annat en sorteringsmeny, en rullista med uppspelning för t.ex. år
+(`interactive_filter_column`), markerade kategorier (`highlight_x_values`),
+referensvärden per stapel (`reference_column`) och en egen färg för negativa värden
+(`color_negative`).
+
+```{r, code = exempel("func_d3_stapeldiagram")}
+```
+
+Grupperade staplar med år i en rullista och rikets värde som referens (`p3` ovan):
+
+```{r}
+p3
+```
+
+### Hanteldiagram
+
+`func_d3_dumbbell()` visar värdet för två perioder per kategori, förbundna med en linje.
+De obligatoriska parametrarna är `df`, `x_value` (kategorierna), `y_value` (värdena) och
+`group` (perioderna). Tooltipen visar start, slut och förändring. Med
+`line_color_by_change = TRUE` färgas linjerna efter om värdet ökat eller minskat.
+`text_scale` förstorar eller förminskar all text på en gång, t.ex. inför en export, och
+`show_major_grid = "x"` eller `"y"` visar stödlinjerna i bara en riktning.
+
+```{r, code = exempel("func_d3_dumbbell")}
+```
+
+Linjer färgade efter förändringen, sorterat efter förändring (`p2` ovan):
+
+```{r}
+p2
+```
+
+### Cirkel- och munkdiagram
+
+`func_d3_cirkeldiagram()` har ingen motsvarighet i funcVGR. Parametrarna har samma namn
+som i linjediagrammet där de är meningsfulla: `x_value` är tårtbitens namn och `y_value`
+dess storlek, och båda är obligatoriska tillsammans med `df`. Det som bara finns i
+cirkeldiagram ligger i familjen `pie_*`: `pie_inner_radius` gör ett munkdiagram,
+`pie_center_text` skriver t.ex. summan i mitten och `pie_other_threshold` slår ihop små
+bitar till "Övrigt".
+
+```{r, code = exempel("func_d3_cirkeldiagram")}
+```
+
+Munkdiagrammet med summan i mitten (`p3` ovan):
+
+```{r}
+p3
+```
+
+### Spridningsdiagram
+
+`func_d3_spridningsdiagram()` (eller `func_d3_scatterplot()`) har samma parametrar som
+`func_graf_spridningsdiagram()`: `df`, `x_value` och `y_value` är obligatoriska, och
+grupper, bubblor (`point_size_column`), etiketter, trendlinje och referenslinjer fungerar
+likadant. Tooltipen visar punktens värden och de kolumner som anges i `tooltip_columns`.
+Dra en ruta i diagrammet för att zooma, klicka i förklaringen för att dölja en grupp och
+sök efter en punkt i sökrutan (med `data_label_column`). Med
+`interactive_filter_column` får diagrammet en rullista, t.ex. för år, och vid
+uppspelning glider punkterna till sina nya lägen.
+
+```{r, code = exempel("func_d3_spridningsdiagram")}
+```
+
+Bubblorna över fem år (`p3` ovan):
+
+```{r}
+p3
+```
+
+### Histogram
+
+`func_d3_histogram()` har samma parametrar som `func_graf_histogram()`, med `df` och
+`x_value` som obligatoriska, och samma intervall. Knappar ovanför diagrammet växlar
+mellan antal och andel och, med `group`, mellan staplade, grupperade och överlagrade
+staplar. Tooltipen visar intervallet, antalet och andelen. Med
+`interactive_filter_column` ligger intervallen still medan staplarna växer till nya
+höjder för varje år.
+
+```{r, code = exempel("func_d3_histogram")}
+```
+
+Histogrammet per kön med medianen (`p2` ovan):
+
+```{r}
+p2
+```
+
+## Kartor
+
+Kartfunktionerna tar emot ett `sf`-objekt och skickar geometrin till webbläsaren i
+kartans eget koordinatsystem. Alla kartor går att zooma med mushjulet, och på en pekskärm
+genom att nypa. Täthetskartan har fast storlek. Koropletkartan och förändringskartan ritas
+om i den bredd som finns när de inte får plats (`responsive = TRUE`, standard), så att text
+och förklaring behåller sin storlek även på en mobil. På en smal skärm, under
+`responsive_breakpoint` (600 px), läggs en förklaring till vänster eller höger under kartan.
+På en pekskärm visar det första trycket på ett område tooltipen och nästa tryck zoomar dit.
+Med `interactive_resize = TRUE` får koropletkartan och förändringskartan ett draghandtag i
+kartytans nedre högra hörn, så att den som tittar på kartan kan göra kartytan större eller
+mindre. Medan man drar visar en streckad ram kartytans nya storlek; rubriker, förklaring och
+bildtext ligger kvar utanför ramen och behåller sin storlek.
+Kartan behåller då sin skala och rutan visar ett annat utsnitt (`resize_keep_scale = TRUE`,
+standard): en större ruta visar mer runt kartan, och i en mindre ruta kan man panorera till
+resten. Med `resize_keep_scale = FALSE` ritas kartan i stället om så att den fyller den nya
+storleken. Zoom, år och dolda klasser följer med. Gränserna sätts med `resize_min` och
+`resize_max`. Utan `resize_max` får rutan inte bli bredare än sidan eller, i en
+reveal.js-presentation, gå nedanför bildytan (`karta7` och `karta8` nedan).
+I exemplen nedan görs kartorna lite mindre med `d3_size()` så att de får plats på sidan.
+
+`func_d3_karta()` och `func_d3_karta_change()` skickar datan i kompakt form: geometrin
+avrundas till ett rutnät (1 m för hela Sverige i SWEREF99 TM) och sparas som heltalssteg,
+och värdena per år sparas som listor i områdenas ordning. Det gör att även stora kartor,
+t.ex. Sveriges drygt 3 000 RegSO-områden under 20 år, blir några MB i stället för över
+20 MB. Vill du ha en ännu mindre fil kan du förenkla geometrin med
+`geom_simplify_tolerance`. Geometrin ligger i ett eget block på sidan, så har flera kartor i
+samma dokument eller i samma fil från `func_d3_spara()` samma underlag lagras det bara en gång.
+
+### Koropletkarta
+
+`func_d3_karta()` färgar områden efter ett värde (`df_value`, indelat i klasser med
+`breaks_*`) eller efter kategorier (`group`). De obligatoriska parametrarna är `df` och
+`geom_col`. Tooltipen visar områdets rangordning, och en sökruta hittar ett område: medan
+man skriver visas en lista med namn som börjar med eller innehåller texten (den går att
+scrolla och fungerar även på mobil), när man väljer ett namn i listan zoomar kartan dit
+direkt, och ett kryss tömmer rutan. Med
+`time_column` innehåller data en rad per område och år, och kartan får ett tidsreglage
+med uppspelning och knappar som växlar mellan nivå och förändring. I förändringsläget har
+reglaget två handtag, så att man väljer både startår och slutår för förändringen.
+På kartor med många små områden kan etiketterna vänta tills man har zoomat in så långt
+att de inte krockar (`data_label_zoom = TRUE`). Hur mycket etiketterna får överlappa
+ställs in med `data_label_zoom_overlap`, och `data_label_text_color = "auto"` ger
+mörk eller vit text efter områdets färg (`karta5` nedan).
+Under kartan kan en summeringsrad beskriva de områden som syns i kartytan just nu, t.ex.
+befolkningen och andelen sysselsatta i den del av kartan man zoomat in på. Summorna anges med
+`summary_sum`, kvoter mellan två summor med `summary_ratio` och texten med en mall i
+`summary_text`. Raden räknas om när man zoomar, byter år eller döljer klasser i förklaringen.
+Med `interactive_exclude` får raden kryssrutor som tonar ned en grupp områden, t.ex.
+studentområden, och räknar bort dem (`karta9` nedan).
+
+```{r, code = exempel("func_d3_karta")}
+```
+
+Kartan med kvantilklasser (`karta2` ovan) och kartan med tidsreglage (`karta4` ovan):
+
+```{r}
+karta2 + d3_size(width = 650, height = 720)
+karta4 + d3_size(width = 650, height = 760)
+```
+
+### Förändringskarta
+
+`func_d3_karta_change()` visar förändringen mellan första och senaste året i
+`year_column`, absolut eller i procent (`percentage_growth`). De obligatoriska
+parametrarna är `df`, `df_value` och `geom_col`. Ett tidsreglage visar förändringen till
+mellanliggande år, och knappar växlar till nivåkartan.
+
+```{r, code = exempel("func_d3_karta_change")}
+```
+
+Procentuell förändring med namnen utanför kartan (`karta2` ovan):
+
+```{r}
+karta2 + d3_size(width = 680, height = 720)
+```
+
+### Täthetskarta
+
+`func_d3_karta_heatmap()` visar hur tätt punkter ligger, ovanpå en bakgrundskarta. De
+obligatoriska parametrarna är `df` (ett `sf`-objekt med punkter), `df_value` (visas i
+tooltipen) och `basemap`. Konturerna räknas fram av ggplot2 och blir desamma som i
+funcVGR. Med `group` färgas punkterna per grupp och en rullista visar tätheten för en
+grupp i taget, och `interactive_adjust_values` ger ett reglage för utjämningen.
+
+```{r, code = exempel("func_d3_karta_heatmap")}
+```
+
+Punkter per sektor med reglage för utjämningen (`karta2` ovan):
+
+```{r}
+karta2 + d3_size(width = 650, height = 760)
+```
+
+## Bygga diagram med `+`
+
+`d3_plot()` är ett alternativ till att ange alla argument i ett anrop, i samma anda som
+ggplot2. `d3_plot(df)` tar emot data, ett diagramtypslager väljer diagramtyp och övriga
+lager lägger till inställningar. Diagramtypslagren är `d3_map()`, `d3_map_change()`,
+`d3_heatmap()`, `d3_line()`, `d3_bar()`, `d3_dumbbell()` och `d3_pie()`, och de tar
+diagramfunktionens parametrar med fullständiga namn. Det gör även `d3_labs()`,
+`d3_theme()`, `d3_params()` och `d3_colors()`.
+
+Familjelagren lägger till ett prefix, så att `d3_legend(position = "right")` blir
+`legend_position`: `d3_labels()`, `d3_legend()`, `d3_breaks()`, `d3_tooltip()`,
+`d3_interactive()`, `d3_animation()`, `d3_margin()`, `d3_time()`, `d3_bubbles()`,
+`d3_facet()`, `d3_highlight()`, `d3_donut()`, `d3_basemap()` och `d3_overlay()`.
+`d3_forecast()` lägger till en prognos i ett linjediagram och `d3_size()` ändrar storleken.
+Lagren kan också läggas på ett objekt från en vanlig `func_d3_*()`-funktion. Ett namn som
+diagramtypen inte har ger ett fel, och ett senare lager vinner över ett tidigare. Varje lager
+har en egen hjälpsida med exempel, t.ex. `?d3_legend`; familjelagrens hjälpsidor har en
+tabell över vilka argument som finns i vilken diagramtyp.
+
+Exemplet nedan visar `d3_plot()` själv: data, en diagramtyp och parametrar direkt i
+`d3_plot()`.
+
+```{r, code = exempel("d3_plot")}
+```
+
+Diagrammet med parametrarna i `d3_plot()` (`p2` ovan):
+
+```{r}
+p2
+```
+
+Familjelagren lägger till inställningar på ett befintligt diagram, här förklaringen och
+dataetiketterna:
+
+```{r}
+p2 + d3_legend(position = "right", title = "Område") + d3_labels(show = TRUE, first_last = TRUE)
+```
+
+## Spara och hitta funktionerna
+
+`func_d3_spara()` sparar ett diagram till fil, och formatet avgörs av ändelsen. En
+`.html`-fil är fristående och interaktiv, med D3 och all JavaScript inbäddad, så att den
+fungerar utan nätverk. `.png` passar till PowerPoint och `.svg` ger en vektorbild; de
+kräver paketen webshot2 respektive chromote och Chrome eller Edge, och exemplet för dem
+körs därför inte när vignetten byggs. Funktionen returnerar sökvägen osynligt och skriver
+ut var filen sparades. I RStudio är den utskrivna sökvägen en länk: klicka på den för att
+öppna filen, t.ex. en HTML-fil i webbläsaren. Samma sak gör `func_d3_oppna()`, som tar
+sökvägen och öppnar filen i det program datorn använder för filtypen. En lista med
+diagram sparas i samma HTML-fil, med namnen i listan som rubriker; så sparar exemplen på
+hjälpsidorna alla sina diagram.
+
+```{r, code = exempel("func_d3_spara")}
+```
+
+`func_d3_hjalp()` skriver ut diagramfunktionerna med en kort beskrivning och vilka lager
+som finns:
+
+```{r, code = exempel("func_d3_hjalp")}
+```
+
+## Översikt över funktionerna
+
+| Funktion | Vad den gör | Obligatoriska parametrar |
+|---|---|---|
+| `func_d3_karta()` | Rita en interaktiv koropletkarta | `df`, `geom_col` |
+| `func_d3_karta_change()` | Rita en interaktiv karta över förändring mellan två år | `df`, `df_value`, `geom_col` |
+| `func_d3_karta_heatmap()` | Rita en interaktiv täthetskarta för punkter | `df`, `df_value`, `basemap` |
+| `func_d3_linjediagram()` | Rita ett interaktivt linjediagram | `df`, `x_value`, `y_value` |
+| `func_d3_stapeldiagram()`, `func_d3_barchart()` | Rita ett interaktivt stapeldiagram | `df`, `x_value`, `y_value` |
+| `func_d3_dumbbell()` | Rita ett interaktivt hanteldiagram | `df`, `x_value`, `y_value`, `group` |
+| `func_d3_cirkeldiagram()` | Rita ett interaktivt cirkel- eller munkdiagram | `df`, `x_value`, `y_value` |
+| `func_d3_spridningsdiagram()`, `func_d3_scatterplot()` | Rita ett interaktivt spridningsdiagram | `df`, `x_value`, `y_value` |
+| `func_d3_histogram()` | Rita ett interaktivt histogram | `df`, `x_value` |
+| `func_d3_spara()` | Spara ett diagram som HTML, PNG eller SVG | `plot`, `fil` |
+| `func_d3_oppna()` | Öppna en sparad fil, t.ex. HTML i webbläsaren | `fil` |
+| `func_d3_hjalp()` | Lista funktionerna i funcVGRD3 | – |
+| `d3_plot()` | Starta ett diagram för `+`-syntaxen | `df` |
+| `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_bar()`, `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()` | Välj diagramtyp och ange dess parametrar | – |
+| `d3_labs()`, `d3_theme()`, `d3_params()`, `d3_colors()` | Lägg till parametrar med fullständiga namn | – |
+| `d3_labels()`, `d3_legend()`, `d3_breaks()`, `d3_tooltip()`, `d3_interactive()`, `d3_animation()`, `d3_margin()`, `d3_time()`, `d3_bubbles()`, `d3_facet()`, `d3_highlight()`, `d3_donut()` | Lägg till parametrar i en familj (prefix) | – |
+| `d3_basemap()` | Lägg till en bakgrundskarta och `basemap_*` | `basemap` |
+| `d3_overlay()` | Lägg till konturer ovanpå data och `overlay_*` | `overlay` |
+| `d3_forecast()` | Lägg till en prognos i ett linjediagram | – |
+| `d3_size()` | Ändra diagrammets storlek | – |
