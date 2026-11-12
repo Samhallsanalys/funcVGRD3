@@ -9,18 +9,49 @@ som fristående HTML, PNG eller SVG.
 
 ## Installation
 
-Kräver R 4.1 eller senare. Beroenden från CRAN installeras automatiskt; paketet funcVGR
-behövs inte.
+Kräver R 4.1 eller senare. Paketet installeras från GitHub med **remotes**, och
+beroenden från CRAN installeras automatiskt; paketet funcVGR behövs inte.
 
 ```r
 install.packages("remotes")
-remotes::install_local("G:/RS.RK.DataoAnalys/Samhällsanalys/3. Statistik/7. R/_Paket_test/funcVGRD3_test",
-                       dependencies = TRUE, build_vignettes = TRUE)
+remotes::install_github("Samhallsanalys/funcVGRD3", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
 `build_vignettes = TRUE` gör att vignetten följer med; öppna den med
-`vignette("funcVGRD3")`. D3.js och JavaScript-filerna följer med paketet, så diagrammen
-fungerar utan nätverk.
+`vignette("funcVGRD3")`. Det kräver pandoc, som ingår i RStudio. D3.js och
+JavaScript-filerna följer med paketet, så diagrammen fungerar utan nätverk.
+
+### Åtkomst till GitHub
+
+Repot är privat. Du behöver ett GitHub-konto med åtkomst till organisationen
+Samhallsanalys, och R behöver en personlig åtkomsttoken (PAT) för att hämta
+paketet. Det görs en gång per dator:
+
+```r
+install.packages(c("usethis", "gitcreds"))
+usethis::create_github_token()   # öppnar GitHub: skapa en token med behörigheten "repo"
+gitcreds::gitcreds_set()         # klistra in token när R frågar
+```
+
+Token sparas i Windows Autentiseringshanteraren via Git, så Git for Windows måste
+vara installerat. Har du redan klonat eller pushat repot med Git på datorn finns
+oftast en inloggning sparad, och då behövs inte de här stegen. Felet
+`HTTP error 404. Not Found` betyder att token saknas eller att kontot inte har
+åtkomst till repot.
+
+### Uppdatera
+
+Kör `remotes::install_github()` igen med samma argument. Den installerar bara
+om det finns en ny commit på GitHub; `force = TRUE` installerar om ändå. Starta
+om R först om paketet redan är laddat.
+
+### Från en lokal kopia
+
+Har du källkoden på datorn, t.ex. en klon av repot, installerar du från mappen:
+
+```r
+remotes::install_local("sökväg/till/funcVGRD3", dependencies = TRUE, build_vignettes = TRUE)
+```
 
 ### Valfria paket
 
