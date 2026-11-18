@@ -27,6 +27,7 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{columns} \tab \code{tooltip_columns} \tab koropletkarta, förändringskarta, täthetskarta, linjediagram, stapeldiagram, hanteldiagram, spridningsdiagram \cr
    \code{rank} \tab \code{tooltip_rank} \tab koropletkarta, förändringskarta \cr
    \code{rank_order} \tab \code{tooltip_rank_order} \tab koropletkarta, förändringskarta \cr
+   \code{class} \tab \code{tooltip_class} \tab koropletkarta, förändringskarta \cr
    \code{value_label} \tab \code{tooltip_value_label} \tab koropletkarta, förändringskarta \cr
    \code{unit} \tab \code{tooltip_unit} \tab alla \cr
    \code{unit_change} \tab \code{tooltip_unit_change} \tab koropletkarta, förändringskarta \cr

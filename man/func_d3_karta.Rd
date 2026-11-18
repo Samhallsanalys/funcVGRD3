@@ -104,6 +104,7 @@ func_d3_karta(
   tooltip_columns = NULL,
   tooltip_rank = TRUE,
   tooltip_rank_order = "desc",
+  tooltip_class = TRUE,
   tooltip_value_label = NULL,
   tooltip_unit = NULL,
   tooltip_unit_change = NULL,
@@ -247,7 +248,10 @@ att färgerna går att jämföra.}
 
 \item{breaks_num_group}{Antal klasser (1–20). Används inte när \code{group} anges.}
 
-\item{breaks_decimals}{Antal decimaler i klassgränsernas etiketter.}
+\item{breaks_decimals}{Antal decimaler i klassgränsernas etiketter. Klassen omfattar sin
+nedre gräns men inte sin övre. Med heltalsgränser och heltalsvärden skrivs klassen
+[40, 45) som "40-44"; har värdena decimaler skrivs den med minst en decimal, "40,0-44,9",
+så att etiketten visar vilka värden som ingår.}
 
 \item{data_label_show}{Visa etiketter på kartan.}
 
@@ -388,7 +392,7 @@ inte när \code{group} anges.}
 \item{color_na}{Fyllnadsfärg för områden som saknar värde.}
 
 \item{breaks_round_labels}{\code{TRUE} flyttar upp den nedre gränsen i varje intervall ett
-steg för renare etiketter (t.ex. "5,0 – 5,9" i stället för "4,9 – 5,9").}
+steg för renare etiketter (t.ex. "5,0-5,9" i stället för "4,9-5,9").}
 
 \item{breaks_custom_change}{Numerisk vektor med egna klassgränser för förändringsläget,
 t.ex. \code{c(-5, -2, 0, 2, 5, 10)}. \code{NULL} (standard) ger samma metod som \code{breaks_method},
@@ -422,6 +426,9 @@ visning, t.ex. \code{c("Befolkning" = "bef")}. \code{NULL} (standard) ger inga.}
 \item{tooltip_rank_order}{Rangordning: \code{"desc"} (högst värde = plats 1) eller \code{"asc"}
 (lägst = plats 1).}
 
+\item{tooltip_class}{Visa raden med områdets klass (förklaringens etikett, t.ex.
+"40,0-44,9"), eller gruppen när \code{group} anges. \code{FALSE} tar bort raden.}
+
 \item{tooltip_value_label}{Etikett för värderaden. \code{NULL} (standard) ger
 förklaringens rubrik, annars namnet på \code{df_value} (alltid \code{df_value} när \code{group}
 anges).}
@@ -436,7 +443,7 @@ andelar är då procentenheter, inte procent. \code{NULL} (standard) ger samma e
 
 \item{tooltip_decimals}{Antal decimaler i tooltipens värden. \code{NULL} (standard) ger 0
 om alla värden är heltal, annars \code{data_label_decimals}, men aldrig färre än
-\code{breaks_decimals}. Förändringsläget räknar sina egna decimaler.}
+\code{breaks_decimals} eller klassetiketterna. Förändringsläget räknar sina egna decimaler.}
 
 \item{interactive_zoom}{Zooma och panorera med mushjulet, och klicka på ett område
 för att zooma dit. Man kan zooma in så långt att även det minsta området fyller
@@ -658,7 +665,8 @@ per_ar <- do.call(rbind, lapply(2020:2024, function(a) {
 # legend_title_change anger det i förändringsläget, och breaks_custom_change ger
 # förändringen egna klassgränser runt noll. I förändringsläget har tidsreglaget två
 # handtag, så att både startår och slutår kan väljas (interactive_time_range = FALSE ger
-# ett handtag och förändring från första året).
+# ett handtag och förändring från första året). Förändringen har decimaler, så förklaringen
+# skriver klasserna med en decimal: [0, 1) blir "0,0-0,9", inte "0-0".
 karta4 <- func_d3_karta(per_ar, df_value = "andel", geom_col = "geometry",
                         time_column = "ar", legend_position = "bottom",
                         breaks_decimals = 1, data_label_show = FALSE,
@@ -708,6 +716,7 @@ if (interactive()) karta8
 # befolkningen, andelen sysselsatta (kvoten mellan två summor) och antalet kommuner. Raden
 # räknas om när man zoomar, byter år eller döljer klasser i förklaringen. Kryssrutan i
 # raden (interactive_exclude) tonar ned kommunerna med storstad = TRUE och räknar bort dem.
+# Tooltipen visar bara värdet: utan rangordning (tooltip_rank) och klass (tooltip_class).
 per_ar$bef <- 5000 + (kod \%\% 50) * 2000
 per_ar$sys <- round(per_ar$bef * (0.70 + (kod \%\% 11) / 100))
 per_ar$storstad <- per_ar$kommun \%in\% c("Göteborg", "Mölndal", "Partille")
@@ -718,7 +727,8 @@ karta9 <- func_d3_karta(per_ar, df_value = "andel", geom_col = "geometry",
                         summary_sum = c(bef = "bef"),
                         summary_ratio = list(andel = c("sys", "bef")),
                         summary_count_label = c("kommun", "kommuner"),
-                        interactive_exclude = c("Exkludera storstäderna" = "storstad"))
+                        interactive_exclude = c("Exkludera storstäderna" = "storstad"),
+                        tooltip_rank = FALSE, tooltip_class = FALSE)
 if (interactive()) karta9
 
 # Spara alla kartor ovan i samma fristående HTML-fil (här i en temporär katalog).

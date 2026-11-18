@@ -98,7 +98,10 @@
 #' @param breaks_custom Numerisk vektor med egna klassgränser. Används bara när
 #'   `breaks_method = "custom"`.
 #' @param breaks_num_group Antal klasser (1–20). Används inte när `group` anges.
-#' @param breaks_decimals Antal decimaler i klassgränsernas etiketter.
+#' @param breaks_decimals Antal decimaler i klassgränsernas etiketter. Klassen omfattar sin
+#'   nedre gräns men inte sin övre. Med heltalsgränser och heltalsvärden skrivs klassen
+#'   [40, 45) som "40-44"; har värdena decimaler skrivs den med minst en decimal, "40,0-44,9",
+#'   så att etiketten visar vilka värden som ingår.
 #' @param data_label_show Visa etiketter på kartan.
 #' @param data_label_text_size Etiketternas teckenstorlek i mm (ggplot2:s textenhet, 3
 #'   mm ≈ 8,5 punkter).
@@ -188,7 +191,7 @@
 #'   inte när `group` anges.
 #' @param color_na Fyllnadsfärg för områden som saknar värde.
 #' @param breaks_round_labels `TRUE` flyttar upp den nedre gränsen i varje intervall ett
-#'   steg för renare etiketter (t.ex. "5,0 – 5,9" i stället för "4,9 – 5,9").
+#'   steg för renare etiketter (t.ex. "5,0-5,9" i stället för "4,9-5,9").
 #' @param breaks_custom_change Numerisk vektor med egna klassgränser för förändringsläget,
 #'   t.ex. `c(-5, -2, 0, 2, 5, 10)`. `NULL` (standard) ger samma metod som `breaks_method`,
 #'   eller lika intervall när huvudkartan har egna klassgränser (`breaks_method =
@@ -213,6 +216,8 @@
 #' @param tooltip_rank Visa rangordning, t.ex. "Plats 12 av 49".
 #' @param tooltip_rank_order Rangordning: `"desc"` (högst värde = plats 1) eller `"asc"`
 #'   (lägst = plats 1).
+#' @param tooltip_class Visa raden med områdets klass (förklaringens etikett, t.ex.
+#'   "40,0-44,9"), eller gruppen när `group` anges. `FALSE` tar bort raden.
 #' @param tooltip_value_label Etikett för värderaden. `NULL` (standard) ger
 #'   förklaringens rubrik, annars namnet på `df_value` (alltid `df_value` när `group`
 #'   anges).
@@ -225,7 +230,7 @@
 #'   `tooltip_unit`, eller " %" när `percentage_growth = TRUE`.
 #' @param tooltip_decimals Antal decimaler i tooltipens värden. `NULL` (standard) ger 0
 #'   om alla värden är heltal, annars `data_label_decimals`, men aldrig färre än
-#'   `breaks_decimals`. Förändringsläget räknar sina egna decimaler.
+#'   `breaks_decimals` eller klassetiketterna. Förändringsläget räknar sina egna decimaler.
 #' @param interactive_zoom Zooma och panorera med mushjulet, och klicka på ett område
 #'   för att zooma dit. Man kan zooma in så långt att även det minsta området fyller
 #'   kartan (högst 1 000 gånger).
@@ -503,6 +508,7 @@ func_d3_karta <- function(
   tooltip_columns = NULL,
   tooltip_rank = TRUE,
   tooltip_rank_order = "desc",
+  tooltip_class = TRUE,
   tooltip_value_label = NULL,
   tooltip_unit = NULL,
   tooltip_unit_change = NULL,
@@ -579,9 +585,14 @@ func_d3_karta <- function(
 #  BRYTPUNKTER OCH FÄRGER (delas med func_d3_karta_change)
 # ============================================================
 
-func_d3_karta_brytpunkter <- function(values, method, custom = NULL, n_groups = 4, decimals = 0, round_labels = FALSE) {
+# dec_values: de värden som avgör om etiketterna behöver decimaler, om fler än de som
+# klassgränserna räknas på (förändringsläget: alla år, inte bara det sista)
+func_d3_karta_brytpunkter <- function(values, method, custom = NULL, n_groups = 4, decimals = 0, round_labels = FALSE,
+                                      dec_values = values) {
   # Inf/-Inf (t.ex. division med noll) kan inte ge klassgränser — de hamnar ändå i yttersta klasserna via cut()
-  values <- values[is.finite(values)]
+  # Med 15 värdesiffror, som värdena skrivs till JSON och visas: flyttalsbrus (2,0000000000001)
+  # ska inte räknas som decimaler i etiketterna
+  values <- signif(values[is.finite(values)], 15)
   if (length(values) == 0) stop("vgr_D3: inga ändliga värden — kan inte beräkna klassgränser.")
   min_val <- min(values, na.rm = TRUE)
   max_val <- max(values, na.rm = TRUE)
@@ -598,26 +609,34 @@ func_d3_karta_brytpunkter <- function(values, method, custom = NULL, n_groups = 
   inner  <- unique(inner)
   breaks <- c(-Inf, inner, Inf)
 
-  has_dec <- length(inner) > 0 && any(inner != floor(inner))
-  dp      <- if (has_dec) max(1, decimals) else 0
-  fmt     <- function(x) format(x, nsmall = dp, big.mark = " ", decimal.mark = ",", scientific = FALSE, trim = TRUE)
+  # Klassen omfattar sin nedre gräns men inte sin övre (cut med right = FALSE). Med
+  # heltalsgränser skrivs den övre gränsen därför ett steg under nästa gräns: "40-44" när
+  # värdena är heltal, "40,0-44,9" när de har decimaler (44,7 ingår ju i klassen).
+  has_dec  <- any(inner != floor(inner))
+  dp_grans <- if (has_dec) max(1, decimals) else 0   # gränsernas egna decimaler
+  dec_values <- signif(dec_values[is.finite(dec_values)], 15)
+  dp       <- if (has_dec || any(dec_values != round(dec_values))) max(1, decimals) else 0
+  fmt      <- function(x, d = dp) format(x, nsmall = d, big.mark = " ", decimal.mark = ",",
+                                       scientific = FALSE, trim = TRUE)
 
   n <- length(breaks)
   labels <- if (n == 2) {
     # En enda klass (n_groups = 1 eller alla värden lika)
-    paste0(fmt(round(min_val, decimals)), "-", fmt(round(max_val, decimals)))
+    paste0(fmt(round(min_val, decimals), 0), "-", fmt(round(max_val, decimals), 0))
   } else {
-    c(paste0("< ", fmt(breaks[2])),
+    c(paste0("< ", fmt(breaks[2], dp_grans)),
       if (n > 3) vapply(2:(n - 2), function(i) {
         lower <- breaks[i]; upper <- breaks[i + 1]
         lo_disp <- if (round_labels && has_dec && i > 2) lower + 10^(-dp) else lower
+        up_disp <- if (has_dec) upper else round(upper - 10^(-dp), dp)
         # Tankstreck när en gräns är negativ, annars blir det "-1,3--0,5"
-        sep <- if (lower < 0 || upper < 0) " – " else "-"
-        if (has_dec) paste0(fmt(lo_disp), sep, fmt(upper)) else paste0(fmt(lower), sep, fmt(upper - 1))
+        sep <- if (lower < 0 || up_disp < 0) " – " else "-"
+        paste0(fmt(lo_disp), sep, fmt(up_disp))
       }, character(1)) else character(0),
-      paste0(fmt(breaks[n - 1]), " +"))
+      paste0(fmt(breaks[n - 1], dp_grans), " +"))
   }
-  list(breaks = breaks, labels = labels)
+  # decimals: etiketternas decimaler, så att tooltipens värde visas med minst lika många
+  list(breaks = breaks, labels = labels, decimals = dp)
 }
 
 func_d3_karta_klass <- function(values, brp) {
@@ -865,13 +884,13 @@ func_d3_karta_bygg <- function(p, standardlage = "niva") {
   # gjorda för huvudläget, så det extra läget använder lika intervall; går det inte att räkna
   # (t.ex. ett år helt utan värden) hoppas läget över med ett meddelande. Förändringsläget kan
   # få egna klassgränser med breaks_custom_change (finns bara i func_d3_karta).
-  brytpunkter_for <- function(lage, values) {
+  brytpunkter_for <- function(lage, values, dec_values = values) {
     sekundart <- lage != standardlage
     egna_forandring <- if (lage == "forandring") p$breaks_custom_change else NULL
     metod <- if (!is.null(egna_forandring)) "custom"
              else if (sekundart && p$breaks_method == "custom") "equal" else p$breaks_method
     tryCatch(func_d3_karta_brytpunkter(values, metod, egna_forandring %||% p$breaks_custom, p$breaks_num_group,
-                                       p$breaks_decimals, p$breaks_round_labels),
+                                       p$breaks_decimals, p$breaks_round_labels, dec_values),
              error = function(e) {
                if (!sekundart) stop(e)
                message("vgr_D3: läget '", lage, "' visas inte: ", conditionMessage(e))
@@ -938,7 +957,10 @@ func_d3_karta_bygg <- function(p, standardlage = "niva") {
       legend_title = leg_titel,
       value_label  = p$tooltip_value_label %||% leg_titel %||% p$df_value,
       unit         = p$tooltip_unit %||% "",
-      decimals     = tt_decimaler
+      # Minst lika många decimaler som klassetiketterna, så att 44,7 inte visas som "45" i
+      # klassen "40,0-44,9" (gäller inte ett angivet tooltip_decimals)
+      decimals     = func_d3_tooltip_decimaler(p$tooltip_decimals, varden_alla, p$data_label_decimals,
+                                               max(p$breaks_decimals, brp$decimals))
     )
     debug_info$breaks_niva <- brp
   }
@@ -949,14 +971,34 @@ func_d3_karta_bygg <- function(p, standardlage = "niva") {
     names(bas)[2] <- ".bas"
     fd     <- df_data[ar_av_rad != forsta, ]
     fd$.bas <- bas$.bas[match(fd$.id, bas$.id)]
-    fd$.forandring <- fd[[p$df_value]] - fd$.bas
-    if (p$percentage_growth) fd$.forandring <- fd$.forandring / fd$.bas * 100
+    # Samma beräkning som karta.js: på nivåvärdena som de skrivs till JSON (15 värdesiffror) och
+    # med resultatet avrundat till 15 värdesiffror (toPrecision(15)). Klassgränserna räknas då på
+    # samma värden som webbläsaren klassar och visar.
+    fran <- signif(fd$.bas, 15); till <- signif(fd[[p$df_value]], 15)
+    fd$.forandring <- till - fran
+    if (p$percentage_growth) fd$.forandring <- fd$.forandring / fran * 100
     fd$.forandring[!is.finite(fd$.forandring)] <- NA
+    fd$.forandring <- signif(fd$.forandring, 15)
     fd_ar  <- as.character(fd[[tid]])
     ar_for <- ar[-1]
 
-    # Klassgränser från senaste året, som func_graf_karta_change (förändring första -> sista år)
-    brp <- brytpunkter_for("forandring", fd$.forandring[fd_ar == ar[length(ar)]])
+    # Klassgränser från senaste året, som func_graf_karta_change (förändring första -> sista år).
+    # Om etiketterna behöver decimaler avgörs av förändringarna alla år, och vid absolut
+    # förändring av varje områdes värden räknat från dess första år med värde: förändringen
+    # mellan två valfria år (startår i interactive_time_range) är en skillnad mellan sådana
+    # värden, även för områden som saknar värde första året. Procentuell förändring: se
+    # open_issues.md.
+    dec_forandring <- fd$.forandring
+    # Startåret går bara att byta när tidsreglaget har två handtag (karta.js: spec.time.slider
+    # och spec.time.range)
+    startar_valbart <- isTRUE(p$interactive_time_slider) && isTRUE(p$interactive_time_range)
+    if (!p$percentage_growth && startar_valbart) {
+      niva <- signif(df_data[[p$df_value]], 15)
+      o    <- order(df_data$.id, match(ar_av_rad, ar))
+      forsta_varde <- stats::ave(niva[o], df_data$.id[o], FUN = function(x) x[!is.na(x)][1])
+      dec_forandring <- c(dec_forandring, signif(niva[o] - forsta_varde, 15))
+    }
+    brp <- brytpunkter_for("forandring", fd$.forandring[fd_ar == ar[length(ar)]], dec_forandring)
   }
   if ("forandring" %in% lagen_att_bygga && !is.null(brp)) {
     fd$.klass_for <- func_d3_karta_klass(fd$.forandring, brp)
@@ -986,7 +1028,8 @@ func_d3_karta_bygg <- function(p, standardlage = "niva") {
       # båda (t.ex. " procentenheter"). Från/till-raderna är nivåvärden.
       unit         = p$tooltip_unit_change %||% (if (p$percentage_growth) " %" else (p$tooltip_unit %||% "")),
       level_unit   = p$tooltip_unit %||% "",
-      decimals     = func_d3_tooltip_decimaler(p$tooltip_decimals, fd$.forandring, p$data_label_decimals, p$breaks_decimals)
+      decimals     = func_d3_tooltip_decimaler(p$tooltip_decimals, fd$.forandring, p$data_label_decimals,
+                                               max(p$breaks_decimals, brp$decimals))
     )
     debug_info$breaks_forandring <- brp
     debug_info$forandring <- fd
@@ -1148,14 +1191,18 @@ func_d3_karta_bygg <- function(p, standardlage = "niva") {
                    columns = tt_kolumner,
                    rank = p$tooltip_rank,
                    rank_order = p$tooltip_rank_order,
-                   decimals = tt_decimaler),
+                   class = isTRUE(p$tooltip_class),
+                   # Nivåvärden (förändringslägets rader för start- och slutår) med samma
+                   # decimaler som nivålägets värderad
+                   decimals = lagen$niva$decimals %||% tt_decimaler),
     bubbles = bubblor,
     summary = summering,
     overlay = overlay_spec,
     zoom_groups = zoomgrupper,
     time = list(enabled = !is.null(tid) && length(ar) >= 2,
                 label_show = p$time_label_show,
-                slider = p$interactive_time_slider,
+                # Som range: TRUE/FALSE, så att karta.js och R (startar_valbart) bedömer lika
+                slider = isTRUE(p$interactive_time_slider),
                 range = isTRUE(p$interactive_time_range)),
     interactive = list(zoom = p$interactive_zoom,
                        search = p$interactive_search,

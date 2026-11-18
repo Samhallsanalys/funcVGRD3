@@ -26,10 +26,11 @@ karta2 <- func_d3_karta_change(bef, df_value = "befolkning", geom_col = "geometr
 if (interactive()) karta2
 
 # Kartytan går att dra till ny storlek i hörnet nere till höger (interactive_resize); kartan
-# behåller sin skala och rutan visar ett annat utsnitt
+# behåller sin skala och rutan visar ett annat utsnitt. Tooltipen saknar raden med klassen
+# (tooltip_class = FALSE).
 karta3 <- func_d3_karta_change(bef, df_value = "befolkning", geom_col = "geometry",
                                year_column = "ar", width = 600, height = 650,
-                               interactive_resize = TRUE)
+                               interactive_resize = TRUE, tooltip_class = FALSE)
 if (interactive()) karta3
 
 # Spara kartorna ovan i samma fristående HTML-fil (här i en temporär katalog).

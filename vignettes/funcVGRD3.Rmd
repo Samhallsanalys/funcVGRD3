@@ -199,7 +199,10 @@ samma dokument eller i samma fil från `func_d3_spara()` samma underlag lagras d
 
 `func_d3_karta()` färgar områden efter ett värde (`df_value`, indelat i klasser med
 `breaks_*`) eller efter kategorier (`group`). De obligatoriska parametrarna är `df` och
-`geom_col`. Tooltipen visar områdets rangordning, och en sökruta hittar ett område: medan
+`geom_col`. En klass omfattar sin nedre gräns men inte sin övre; har värdena decimaler
+skriver förklaringen klasserna med decimaler ("40,0-44,9"), annars som heltal ("40-44").
+Tooltipen visar områdets rangordning och klass (`tooltip_rank` och `tooltip_class` tar bort
+raderna), och en sökruta hittar ett område: medan
 man skriver visas en lista med namn som börjar med eller innehåller texten (den går att
 scrolla och fungerar även på mobil), när man väljer ett namn i listan zoomar kartan dit
 direkt, och ett kryss tömmer rutan. Med

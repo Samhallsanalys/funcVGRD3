@@ -85,9 +85,12 @@
 #' @param breaks_custom Numerisk vektor med egna klassgränser. Används bara när
 #'   `breaks_method = "custom"`.
 #' @param breaks_num_group Antal klasser (1–20).
-#' @param breaks_decimals Antal decimaler i klassgränsernas etiketter.
+#' @param breaks_decimals Antal decimaler i klassgränsernas etiketter. Klassen omfattar sin
+#'   nedre gräns men inte sin övre. Med heltalsgränser och heltalsvärden skrivs klassen
+#'   [0, 2) som "0-1"; har värdena decimaler skrivs den med minst en decimal, "0,0-1,9", så
+#'   att etiketten visar vilka värden som ingår.
 #' @param breaks_round_labels `TRUE` flyttar upp den nedre gränsen i varje intervall ett
-#'   steg för renare etiketter (t.ex. "5,0 – 5,9" i stället för "4,9 – 5,9").
+#'   steg för renare etiketter (t.ex. "5,0-5,9" i stället för "4,9-5,9").
 #' @param percentage_growth `TRUE` räknar procentuell förändring i stället för absolut
 #'   förändring.
 #' @param data_label_show Visa etiketter på kartan.
@@ -188,6 +191,8 @@
 #' @param tooltip_rank Visa rangordning, t.ex. "Plats 12 av 49".
 #' @param tooltip_rank_order Rangordning: `"desc"` (störst förändring = plats 1) eller
 #'   `"asc"`.
+#' @param tooltip_class Visa raden med områdets klass (förklaringens etikett, t.ex.
+#'   "0,0-1,9"). `FALSE` tar bort raden.
 #' @param tooltip_value_label Etikett för förändringsraden. `NULL` (standard) ger
 #'   "Förändring" eller "Förändring (%)".
 #' @param tooltip_unit Enhet som läggs efter nivåvärden och absolut förändring, t.ex. `"
@@ -199,7 +204,7 @@
 #'   eller " %" när `percentage_growth = TRUE`.
 #' @param tooltip_decimals Antal decimaler i tooltipens värden. `NULL` (standard) ger 0
 #'   om alla värden är heltal, annars `data_label_decimals`, men aldrig färre än
-#'   `breaks_decimals`. Räknas på förändringsvärdena; raderna för start- och slutår på
+#'   `breaks_decimals` eller klassetiketterna. Räknas på förändringsvärdena; raderna för start- och slutår på
 #'   nivåvärdena.
 #' @param interactive_zoom Zooma och panorera med mushjulet, och klicka på ett område
 #'   för att zooma dit. Man kan zooma in så långt att även det minsta området fyller
@@ -420,6 +425,7 @@ func_d3_karta_change <- function(
   tooltip_columns = NULL,
   tooltip_rank = TRUE,
   tooltip_rank_order = "desc",
+  tooltip_class = TRUE,
   tooltip_value_label = NULL,
   tooltip_unit = NULL,
   tooltip_unit_change = NULL,
