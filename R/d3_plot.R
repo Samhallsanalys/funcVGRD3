@@ -636,6 +636,7 @@ d3_breaks      <- function(...) func_d3_prefixa(list(...), "breaks_")           
 #' | `columns` | `tooltip_columns` | koropletkarta, förändringskarta, täthetskarta, linjediagram, stapeldiagram, hanteldiagram, spridningsdiagram |
 #' | `rank` | `tooltip_rank` | koropletkarta, förändringskarta |
 #' | `rank_order` | `tooltip_rank_order` | koropletkarta, förändringskarta |
+#' | `class` | `tooltip_class` | koropletkarta, förändringskarta |
 #' | `value_label` | `tooltip_value_label` | koropletkarta, förändringskarta |
 #' | `unit` | `tooltip_unit` | alla |
 #' | `unit_change` | `tooltip_unit_change` | koropletkarta, förändringskarta |

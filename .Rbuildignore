@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^CLAUDE\.md$
 ^data-raw$
+^tests/regression$
+^open_issues\.md$

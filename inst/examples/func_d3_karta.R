@@ -37,7 +37,8 @@ per_ar <- do.call(rbind, lapply(2020:2024, function(a) {
 # legend_title_change anger det i förändringsläget, och breaks_custom_change ger
 # förändringen egna klassgränser runt noll. I förändringsläget har tidsreglaget två
 # handtag, så att både startår och slutår kan väljas (interactive_time_range = FALSE ger
-# ett handtag och förändring från första året).
+# ett handtag och förändring från första året). Förändringen har decimaler, så förklaringen
+# skriver klasserna med en decimal: [0, 1) blir "0,0-0,9", inte "0-0".
 karta4 <- func_d3_karta(per_ar, df_value = "andel", geom_col = "geometry",
                         time_column = "ar", legend_position = "bottom",
                         breaks_decimals = 1, data_label_show = FALSE,
@@ -87,6 +88,7 @@ if (interactive()) karta8
 # befolkningen, andelen sysselsatta (kvoten mellan två summor) och antalet kommuner. Raden
 # räknas om när man zoomar, byter år eller döljer klasser i förklaringen. Kryssrutan i
 # raden (interactive_exclude) tonar ned kommunerna med storstad = TRUE och räknar bort dem.
+# Tooltipen visar bara värdet: utan rangordning (tooltip_rank) och klass (tooltip_class).
 per_ar$bef <- 5000 + (kod %% 50) * 2000
 per_ar$sys <- round(per_ar$bef * (0.70 + (kod %% 11) / 100))
 per_ar$storstad <- per_ar$kommun %in% c("Göteborg", "Mölndal", "Partille")
@@ -97,7 +99,8 @@ karta9 <- func_d3_karta(per_ar, df_value = "andel", geom_col = "geometry",
                         summary_sum = c(bef = "bef"),
                         summary_ratio = list(andel = c("sys", "bef")),
                         summary_count_label = c("kommun", "kommuner"),
-                        interactive_exclude = c("Exkludera storstäderna" = "storstad"))
+                        interactive_exclude = c("Exkludera storstäderna" = "storstad"),
+                        tooltip_rank = FALSE, tooltip_class = FALSE)
 if (interactive()) karta9
 
 # Spara alla kartor ovan i samma fristående HTML-fil (här i en temporär katalog).

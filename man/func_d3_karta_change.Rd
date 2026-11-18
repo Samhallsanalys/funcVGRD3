@@ -101,6 +101,7 @@ func_d3_karta_change(
   tooltip_columns = NULL,
   tooltip_rank = TRUE,
   tooltip_rank_order = "desc",
+  tooltip_class = TRUE,
   tooltip_value_label = NULL,
   tooltip_unit = NULL,
   tooltip_unit_change = NULL,
@@ -220,10 +221,13 @@ mörka) eller \code{"lowest"}.}
 
 \item{breaks_num_group}{Antal klasser (1–20).}
 
-\item{breaks_decimals}{Antal decimaler i klassgränsernas etiketter.}
+\item{breaks_decimals}{Antal decimaler i klassgränsernas etiketter. Klassen omfattar sin
+nedre gräns men inte sin övre. Med heltalsgränser och heltalsvärden skrivs klassen
+[0, 2) som "0-1"; har värdena decimaler skrivs den med minst en decimal, "0,0-1,9", så
+att etiketten visar vilka värden som ingår.}
 
 \item{breaks_round_labels}{\code{TRUE} flyttar upp den nedre gränsen i varje intervall ett
-steg för renare etiketter (t.ex. "5,0 – 5,9" i stället för "4,9 – 5,9").}
+steg för renare etiketter (t.ex. "5,0-5,9" i stället för "4,9-5,9").}
 
 \item{percentage_growth}{\code{TRUE} räknar procentuell förändring i stället för absolut
 förändring.}
@@ -381,6 +385,9 @@ visning, t.ex. \code{c("Befolkning" = "bef")}. \code{NULL} (standard) ger inga.}
 \item{tooltip_rank_order}{Rangordning: \code{"desc"} (störst förändring = plats 1) eller
 \code{"asc"}.}
 
+\item{tooltip_class}{Visa raden med områdets klass (förklaringens etikett, t.ex.
+"0,0-1,9"). \code{FALSE} tar bort raden.}
+
 \item{tooltip_value_label}{Etikett för förändringsraden. \code{NULL} (standard) ger
 "Förändring" eller "Förändring (\%)".}
 
@@ -394,7 +401,7 @@ eller " \%" när \code{percentage_growth = TRUE}.}
 
 \item{tooltip_decimals}{Antal decimaler i tooltipens värden. \code{NULL} (standard) ger 0
 om alla värden är heltal, annars \code{data_label_decimals}, men aldrig färre än
-\code{breaks_decimals}. Räknas på förändringsvärdena; raderna för start- och slutår på
+\code{breaks_decimals} eller klassetiketterna. Räknas på förändringsvärdena; raderna för start- och slutår på
 nivåvärdena.}
 
 \item{interactive_zoom}{Zooma och panorera med mushjulet, och klicka på ett område
@@ -553,10 +560,11 @@ karta2 <- func_d3_karta_change(bef, df_value = "befolkning", geom_col = "geometr
 if (interactive()) karta2
 
 # Kartytan går att dra till ny storlek i hörnet nere till höger (interactive_resize); kartan
-# behåller sin skala och rutan visar ett annat utsnitt
+# behåller sin skala och rutan visar ett annat utsnitt. Tooltipen saknar raden med klassen
+# (tooltip_class = FALSE).
 karta3 <- func_d3_karta_change(bef, df_value = "befolkning", geom_col = "geometry",
                                year_column = "ar", width = 600, height = 650,
-                               interactive_resize = TRUE)
+                               interactive_resize = TRUE, tooltip_class = FALSE)
 if (interactive()) karta3
 
 # Spara kartorna ovan i samma fristående HTML-fil (här i en temporär katalog).

@@ -1,7 +1,7 @@
 Package: funcVGRD3
 Type: Package
 Title: Interaktiva D3-diagram och kartor i VGR:s grafiska profil
-Version: 0.13.0
+Version: 0.14.0
 Authors@R: c(
     person(
       "Christian", "Lindell",

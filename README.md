@@ -149,6 +149,36 @@ för hand.
 
 Samma historik finns i NEWS.md och visas i R med `news(package = "funcVGRD3")`.
 
+### 0.14.0 (2026-11-18)
+
+#### Nytt
+* `func_d3_karta()` och `func_d3_karta_change()`: ny parameter `tooltip_class`. `FALSE` tar
+  bort raden med områdets klass (eller grupp) ur tooltipen. Standard är `TRUE`, som förut.
+  Finns också i `d3_tooltip(class = FALSE)`.
+
+#### Ändrat
+* `func_d3_karta()` och `func_d3_karta_change()`: förklaringens klassetiketter visar vilka
+  värden som ingår i klassen. En klass omfattar sin nedre gräns men inte sin övre. När
+  klassgränserna är heltal men värdena har decimaler skrivs klasserna nu med en decimal
+  (minst `breaks_decimals`): "40,0-44,9", "-5,0 – -2,1" och "0,0-1,9" i stället för
+  "40-44", "-5 – -3" och "0-1". Förut såg en minskning på 0,4 ut att höra till "-2 – -1"
+  och en ökning på 1,8 till "0-1". Med heltalsvärden är etiketterna oförändrade ("40-44"),
+  liksom de öppna klasserna ("< 40", "80 +") och etiketterna när gränserna själva har
+  decimaler. I förändringsläget avgör alla år (inte bara det sista) om etiketterna får
+  decimaler. Kartor där värdena har decimaler får alltså andra etiketter än i 0.13.0.
+* Tooltipens värde visas med minst lika många decimaler som klassetiketterna (om inte
+  `tooltip_decimals` anges), så att t.ex. 9,6 inte visas som "10" i klassen "7,0-9,9".
+* `tooltip_class = NA` eller `NULL` tar bort klassraden, som `tooltip_rank`.
+* `interactive_time_slider` visar tidsreglaget bara när värdet är `TRUE`, som
+  `interactive_time_range`. Förut visade också t.ex. `1` reglaget.
+
+#### Rättat
+* Förändringsläget: förändringen räknas med 15 värdesiffror både i R och i webbläsaren, och
+  klassen räknas på samma värde som visas i tooltipen. Förut kunde t.ex. 3,3 - 8,3 =
+  -5,0000000000000009 visas som -5,0 men färgas som "< -5". R räknar nu förändringen på
+  samma värden som webbläsaren (nivåvärdena med 15 värdesiffror), så att klassgränserna och
+  klasserna stämmer även för kvoter med många decimaler.
+
 ### 0.13.0 (2026-10-26)
 
 #### Nytt
