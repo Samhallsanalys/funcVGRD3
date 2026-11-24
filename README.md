@@ -101,6 +101,7 @@ Fler exempel finns på varje funktions hjälpsida (`?func_d3_karta`) och i vigne
 | `func_d3_cirkeldiagram()` | Rita ett interaktivt cirkel- eller munkdiagram | `df`, `x_value`, `y_value` |
 | `func_d3_spridningsdiagram()`, `func_d3_scatterplot()` | Rita ett interaktivt spridningsdiagram | `df`, `x_value`, `y_value` |
 | `func_d3_histogram()` | Rita ett interaktivt histogram | `df`, `x_value` |
+| `func_d3_ladagram()`, `func_d3_boxplot()` | Rita ett interaktivt lådagram | `df`, `y_value` |
 | `func_d3_spara()` | Spara ett vgr_D3-diagram som HTML, PNG eller SVG | `plot`, `fil` |
 | `func_d3_oppna()` | Öppna en sparad fil, t.ex. HTML i webbläsaren | `fil` |
 | `func_d3_hjalp()` | Lista funktionerna i funcVGRD3 | – |
@@ -110,7 +111,7 @@ Datasetet `vg_kommuner` innehåller Västra Götalands 49 kommuner som `sf`-obje
 används i kartexemplen (`?vg_kommuner`).
 
 Lagren är `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_bar()`,
-`d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()`, `d3_labs()`, `d3_theme()`, `d3_params()`, `d3_colors()`,
+`d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()`, `d3_boxplot()`, `d3_labs()`, `d3_theme()`, `d3_params()`, `d3_colors()`,
 `d3_labels()`, `d3_legend()`, `d3_breaks()`, `d3_tooltip()`, `d3_interactive()`,
 `d3_animation()`, `d3_margin()`, `d3_time()`, `d3_bubbles()`, `d3_facet()`,
 `d3_highlight()`, `d3_donut()`, `d3_basemap()`, `d3_overlay()`, `d3_forecast()` och
@@ -148,6 +149,30 @@ för hand.
 ## Versionshistorik
 
 Samma historik finns i NEWS.md och visas i R med `news(package = "funcVGRD3")`.
+
+### 0.15.0 (2026-11-24)
+
+#### Nytt
+
+* `func_d3_ladagram()` (även under namnet `func_d3_boxplot()`): nytt interaktivt
+  lådagram med samma parametrar och samma lådor som `func_graf_ladagram()` i funcVGR
+  (grupper, liggande lådor, medelvärde, punkter, medianetiketter och referenslinjer).
+  Tilläggen:
+  * Tooltipen visar antal, kvartiler, median, morrhår, medelvärde och, med `box_outliers = TRUE`,
+    antal avvikande värden; `tooltip_unit` läggs efter värdena.
+  * En meny sorterar lådorna efter medianen eller namnet (`interactive_sort`).
+  * Klicka i förklaringen för att dölja en grupp, dubbelklicka för att bara visa den.
+  * `interactive_filter_column` ger en rullista med uppspelning, t.ex. för år, där lådorna
+    glider till sina nya värden.
+  * `y_break_line_label` skriver text vid referenslinjerna.
+* `d3_boxplot()`: lådagrammet i `+`-syntaxen, t.ex.
+  `d3_plot(df) + d3_boxplot(x_value = "region", y_value = "inkomst")`.
+
+#### Dokumentation
+
+* Hjälpsidorna för `d3_colors()`, `d3_labs()`, `d3_facet()`, `d3_labels()`,
+  `d3_interactive()` och `d3_animation()` tar med spridningsdiagram, histogram och
+  lådagram där de har parametrarna.
 
 ### 0.14.0 (2026-11-18)
 

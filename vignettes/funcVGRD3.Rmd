@@ -166,6 +166,25 @@ Histogrammet per kön med medianen (`p2` ovan):
 p2
 ```
 
+### Lådagram
+
+`func_d3_ladagram()` (eller `func_d3_boxplot()`) har samma parametrar och samma lådor som
+`func_graf_ladagram()`: `df` och `y_value` är obligatoriska, och grupper, liggande lådor,
+medelvärde, punkter och medianetiketter fungerar likadant. Tooltipen visar antal,
+kvartiler, median, morrhår, medelvärde och, med `box_outliers = TRUE`, antal avvikande värden. En meny ovanför
+diagrammet sorterar lådorna efter medianen eller namnet, och förklaringen döljer eller
+visar en grupp. Med `interactive_filter_column` får diagrammet en rullista, t.ex. för år,
+och vid uppspelning glider lådorna till sina nya värden.
+
+```{r, code = exempel("func_d3_ladagram")}
+```
+
+Kvinnor och män i varje delregion (`p3` ovan):
+
+```{r}
+p3
+```
+
 ## Kartor
 
 Kartfunktionerna tar emot ett `sf`-objekt och skickar geometrin till webbläsaren i
@@ -336,11 +355,12 @@ som finns:
 | `func_d3_cirkeldiagram()` | Rita ett interaktivt cirkel- eller munkdiagram | `df`, `x_value`, `y_value` |
 | `func_d3_spridningsdiagram()`, `func_d3_scatterplot()` | Rita ett interaktivt spridningsdiagram | `df`, `x_value`, `y_value` |
 | `func_d3_histogram()` | Rita ett interaktivt histogram | `df`, `x_value` |
+| `func_d3_ladagram()`, `func_d3_boxplot()` | Rita ett interaktivt lådagram | `df`, `y_value` |
 | `func_d3_spara()` | Spara ett diagram som HTML, PNG eller SVG | `plot`, `fil` |
 | `func_d3_oppna()` | Öppna en sparad fil, t.ex. HTML i webbläsaren | `fil` |
 | `func_d3_hjalp()` | Lista funktionerna i funcVGRD3 | – |
 | `d3_plot()` | Starta ett diagram för `+`-syntaxen | `df` |
-| `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_bar()`, `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()` | Välj diagramtyp och ange dess parametrar | – |
+| `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_bar()`, `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()`, `d3_boxplot()` | Välj diagramtyp och ange dess parametrar | – |
 | `d3_labs()`, `d3_theme()`, `d3_params()`, `d3_colors()` | Lägg till parametrar med fullständiga namn | – |
 | `d3_labels()`, `d3_legend()`, `d3_breaks()`, `d3_tooltip()`, `d3_interactive()`, `d3_animation()`, `d3_margin()`, `d3_time()`, `d3_bubbles()`, `d3_facet()`, `d3_highlight()`, `d3_donut()` | Lägg till parametrar i en familj (prefix) | – |
 | `d3_basemap()` | Lägg till en bakgrundskarta och `basemap_*` | `basemap` |

@@ -10,7 +10,9 @@
   func_d3_cirkeldiagram  = "Cirkel-/munkdiagram (parametrar som func_graf_linjediagram + pie_*)",
   func_d3_spridningsdiagram = "Spridningsdiagram (func_graf_spridningsdiagram) — grupper, bubblor, trendlinje, zoom, sök, år",
   func_d3_scatterplot    = "Samma som func_d3_spridningsdiagram, under ett engelskt namn",
-  func_d3_histogram      = "Histogram (func_graf_histogram) — antal/andel, staplat/bredvid/överlagrat, år"
+  func_d3_histogram      = "Histogram (func_graf_histogram) — antal/andel, staplat/bredvid/överlagrat, år",
+  func_d3_ladagram       = "Lådagram (func_graf_ladagram) — grupper, liggande, punkter, sortering, år",
+  func_d3_boxplot        = "Samma som func_d3_ladagram, under ett engelskt namn"
 )
 
 #' Lista funktionerna i funcVGRD3

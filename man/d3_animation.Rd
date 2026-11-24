@@ -23,9 +23,9 @@ Argument och var de finns (vad parametrarna gör står på diagramfunktionernas
 hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    Argument \tab Parameter \tab Finns i \cr
    \code{duration} \tab \code{animation_duration} \tab alla \cr
-   \code{play_interval} \tab \code{animation_play_interval} \tab koropletkarta, förändringskarta, täthetskarta, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram \cr
+   \code{play_interval} \tab \code{animation_play_interval} \tab koropletkarta, förändringskarta, täthetskarta, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
    \code{draw} \tab \code{animation_draw} \tab linjediagram, hanteldiagram, cirkeldiagram \cr
-   \code{grow} \tab \code{animation_grow} \tab stapeldiagram, spridningsdiagram, histogram \cr
+   \code{grow} \tab \code{animation_grow} \tab stapeldiagram, spridningsdiagram, histogram, lådagram \cr
 }
 }
 \examples{

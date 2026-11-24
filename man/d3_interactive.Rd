@@ -40,10 +40,10 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{index_labels} \tab \code{interactive_index_labels} \tab linjediagram \cr
    \code{bar_type_toggle} \tab \code{interactive_bar_type_toggle} \tab stapeldiagram, histogram \cr
    \code{y_toggle} \tab \code{interactive_y_toggle} \tab histogram \cr
-   \code{sort} \tab \code{interactive_sort} \tab stapeldiagram, hanteldiagram \cr
-   \code{filter_column} \tab \code{interactive_filter_column} \tab stapeldiagram, cirkeldiagram, spridningsdiagram, histogram \cr
-   \code{filter_default} \tab \code{interactive_filter_default} \tab stapeldiagram, cirkeldiagram, spridningsdiagram, histogram \cr
-   \code{filter_same_y} \tab \code{interactive_filter_same_y} \tab stapeldiagram, histogram \cr
+   \code{sort} \tab \code{interactive_sort} \tab stapeldiagram, hanteldiagram, lådagram \cr
+   \code{filter_column} \tab \code{interactive_filter_column} \tab stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{filter_default} \tab \code{interactive_filter_default} \tab stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{filter_same_y} \tab \code{interactive_filter_same_y} \tab stapeldiagram, histogram, lådagram \cr
 }
 }
 \examples{

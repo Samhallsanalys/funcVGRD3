@@ -450,7 +450,6 @@ func_d3_karta_heatmap_bygg <- function(p) {
                                                               text = as.character(lager$names$Kommunnamn[i])))
   }
 
-  punkt_px <- function(storlek) 0.375 * (storlek * 72.27 / 25.4 + 0.5 * 96 / 25.4 / 2) * 96 / 72
   standard_period <- if (!is.null(p$time_default) && as.character(p$time_default) %in% perioder) as.character(p$time_default) else perioder[length(perioder)]
 
   spec <- list(
@@ -477,7 +476,7 @@ func_d3_karta_heatmap_bygg <- function(p) {
     text_scale = p$text_scale,   # för periodstämpeln
     periods = as.list(perioder), default_period = standard_period,
     density_groups = as.list(tathet_grupper),
-    points = list(show = p$show_points, data = punkter, r = punkt_px(p$point_size),
+    points = list(show = p$show_points, data = punkter, r = func_d3_punkt_px(p$point_size),
                   color = func_d3_farg(p$point_color), alpha = p$point_alpha,
                   group_colors = punkt_farger, groups = as.list(grupp_nivaer)),
     legend = list(position = p$legend_position, title = legend_titel,

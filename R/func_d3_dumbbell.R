@@ -529,8 +529,6 @@ func_d3_dumbbell_bygg <- function(p) {
   # facet_wrap utan ncol använder ggplot2:s wrap_dims(), dvs. ncol = n2mfrow(n)[1]
   ncol_val <- min(p$facet_ncol %||% grDevices::n2mfrow(n_f)[1], n_f)
 
-  punkt_px <- function(storlek) 0.375 * (storlek * 72.27 / 25.4 + 0.5 * 96 / 25.4 / 2) * 96 / 72
-
   spec <- list(
     typ = "dumbbell", js_fil = "dumbbell",
     width = p$width, height = p$height, font = func_d3_typsnitt(p$font),
@@ -552,7 +550,7 @@ func_d3_dumbbell_bygg <- function(p) {
     sort = list(by = p$sort_axis_by, direction = tolower(p$sort_direction)),
     facets = list(levels = as.list(facet_levels), ncol = ncol_val, same = p$facet_same_y_scale,
                   grid_rows = !is.null(facet_var) && !is.null(p$facet_ncol) && p$facet_ncol == 1 && !p$facet_same_y_scale),
-    point = list(r = punkt_px(p$point_size), shape = p$point_shape, alpha = p$point_alpha),
+    point = list(r = func_d3_punkt_px(p$point_size), shape = p$point_shape, alpha = p$point_alpha),
     line = list(size = p$line_size * 72.27 / 25.4, color = func_d3_farg(p$line_color),
                 dash = switch(p$line_type, dashed = c(4, 4), dotted = c(1, 3), dotdash = c(1, 3, 4, 3),
                               dashdot = c(1, 3, 4, 3), longdash = c(7, 3), twodash = c(2, 2, 6, 2), NULL),

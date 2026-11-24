@@ -12,7 +12,8 @@
 #'
 #' @details
 #' Diagramtypen väljs med [d3_map()], [d3_map_change()], [d3_heatmap()], [d3_line()],
-#' [d3_bar()], [d3_dumbbell()], [d3_pie()], [d3_scatter()] eller [d3_histogram()].
+#' [d3_bar()], [d3_dumbbell()], [d3_pie()], [d3_scatter()], [d3_histogram()] eller
+#' [d3_boxplot()].
 #' Inställningar läggs till med lager som
 #' tar fullständiga parameternamn ([d3_labs()], [d3_theme()], [d3_colors()],
 #' [d3_params()], [d3_size()]), lager för en parameterfamilj ([d3_labels()],
@@ -225,6 +226,27 @@ d3_scatter    <- function(...) func_d3_lager(list(...), typ = "spridningsdiagram
 #' @export
 #' @example inst/examples/d3_histogram.R
 d3_histogram  <- function(...) func_d3_lager(list(...), typ = "histogram")          # Histogram (func_d3_histogram): x_value, bin_width, group ...
+#' Välj lådagram i `+`-syntaxen
+#'
+#' Gör diagrammet till ett lådagram (boxplot) i `+`-syntaxen. Lagret tar samma parametrar
+#' som [func_d3_ladagram()], med fullständiga namn, t.ex. `x_value`, `y_value` och
+#' `group`.
+#'
+#' @details
+#' De obligatoriska parametrarna i [func_d3_ladagram()] måste finnas någonstans i
+#' diagrammet: `df` anges i [d3_plot()], de övriga i det här lagret eller i ett annat
+#' lager. Lägg till lagret på ett objekt som redan har en annan diagramtyp så byts typen;
+#' parametrar som betyder samma sak i båda typerna (t.ex. `data_labels` och
+#' `data_label_show`) får rätt namn automatiskt.
+#'
+#' @param ... Parametrar till [func_d3_ladagram()] med fullständiga namn. Alla måste
+#'   vara namngivna.
+#'
+#' @return Ett lager av klassen `vgr_d3_lager`, som läggs till ett diagram med `+`.
+#' @seealso [d3_plot()] beskriver `+`-syntaxen.
+#' @export
+#' @example inst/examples/d3_boxplot.R
+d3_boxplot    <- function(...) func_d3_lager(list(...), typ = "ladagram")           # Lådagram (func_d3_ladagram): x_value, y_value, group ...
 #' Ställ in cirkel- och munkdiagram
 #'
 #' Sätter det som bara finns i cirkeldiagram (`pie_*`), t.ex. hålet som gör ett
@@ -336,12 +358,12 @@ d3_forecast   <- function(from = NULL,
 #'
 #' | Argument | Parameter | Finns i |
 #' |---|---|---|
-#' | `var` | `facet_var` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
-#' | `ncol` | `facet_ncol` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
-#' | `same_y_scale` | `facet_same_y_scale` | linjediagram, stapeldiagram, hanteldiagram, spridningsdiagram, histogram |
-#' | `title_size` | `facet_title_size` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
-#' | `title_wrap` | `facet_title_wrap` | linjediagram, stapeldiagram, cirkeldiagram |
-#' | `scales` | `facet_scales` | stapeldiagram, spridningsdiagram, histogram |
+#' | `var` | `facet_var` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
+#' | `ncol` | `facet_ncol` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
+#' | `same_y_scale` | `facet_same_y_scale` | linjediagram, stapeldiagram, hanteldiagram, spridningsdiagram, histogram, lådagram |
+#' | `title_size` | `facet_title_size` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
+#' | `title_wrap` | `facet_title_wrap` | linjediagram, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
+#' | `scales` | `facet_scales` | stapeldiagram, spridningsdiagram, histogram, lådagram |
 #'
 #' @param ... Inställningar i familjen `facet_*`, namngivna utan prefixet, t.ex. `position
 #'   = "right"` för `facet_position`. Tabellen nedan visar vilka argument som finns. Ett
@@ -361,8 +383,8 @@ d3_facet      <- function(...) func_d3_prefixa(list(...), "facet_")             
 #' @details
 #' Lagret tar egentligen vilka parametrar som helst med fullständiga namn, precis som
 #' [d3_params()]; namnet visar vad det är tänkt för. Alla diagramtyper har `title`,
-#' `subtitle`, `caption` och `legend_title`; axeltitlarna finns i linje-, stapel- och
-#' hanteldiagram.
+#' `subtitle`, `caption` och `legend_title`; axeltitlarna finns i linje-, stapel-,
+#' hantel-, spridnings- och lådagram samt histogram.
 #'
 #' @param ... Texter med diagramfunktionens fullständiga parameternamn, t.ex. `title =
 #'   "Arbetslöshet"`. Alla måste vara namngivna.
@@ -436,6 +458,10 @@ d3_params      <- function(...) func_d3_lager(list(...))                        
 #' * cirkeldiagram: `colors`, `pie_border_color`, `pie_other_color`, `data_label_color`,
 #'   `data_label_box_color`, `data_label_glow_color`, `highlight_color`,
 #'   `group_highlight_unhighlighted_color`
+#' * spridningsdiagram: `colors`, `point_border_color`, `trend_line_color`,
+#'   `data_label_color`, `data_label_box_color`
+#' * histogram: `colors`, `bar_line_color`, `data_label_color`
+#' * lådagram: `colors`, `box_line_color`, `data_label_color`
 #'
 #' @param ... Färgparametrar med fullständiga namn, t.ex. `colors = c("Kvinnor" =
 #'   "#1a9fb3", "Män" = "#ffc107")`. Alla måste vara namngivna.
@@ -498,12 +524,12 @@ d3_size        <- function(width = NULL, height = NULL, responsive = NULL,
 #' | Argument | Parameter | Finns i |
 #' |---|---|---|
 #' | `show` | `data_label_show` | koropletkarta, förändringskarta |
-#' | `text_size` | `data_label_text_size` | koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
+#' | `text_size` | `data_label_text_size` | koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram |
 #' | `text_color` | `data_label_text_color` | koropletkarta, förändringskarta |
 #' | `box` | `data_label_box` | koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
 #' | `box_color` | `data_label_box_color` | koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
 #' | `box_alpha` | `data_label_box_alpha` | koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram |
-#' | `decimals` | `data_label_decimals` | koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram |
+#' | `decimals` | `data_label_decimals` | koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram |
 #' | `decimal` | `data_label_decimal` | koropletkarta |
 #' | `glow` | `data_label_glow` | koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram |
 #' | `glow_color` | `data_label_glow_color` | koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram |
@@ -528,7 +554,7 @@ d3_size        <- function(width = NULL, height = NULL, responsive = NULL,
 #' | `thousands_sep` | `data_label_thousands_sep` | förändringskarta |
 #' | `zoom` | `data_label_zoom` | koropletkarta, förändringskarta |
 #' | `zoom_overlap` | `data_label_zoom_overlap` | koropletkarta, förändringskarta |
-#' | `color` | `data_label_color` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
+#' | `color` | `data_label_color` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram |
 #' | `format` | `data_label_format` | linjediagram, stapeldiagram, cirkeldiagram |
 #' | `x_values` | `data_label_x_values` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
 #' | `y_values` | `data_label_y_values` | linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram |
@@ -682,10 +708,10 @@ d3_tooltip     <- function(...) func_d3_prefixa(list(...), "tooltip_")          
 #' | `index_labels` | `interactive_index_labels` | linjediagram |
 #' | `bar_type_toggle` | `interactive_bar_type_toggle` | stapeldiagram, histogram |
 #' | `y_toggle` | `interactive_y_toggle` | histogram |
-#' | `sort` | `interactive_sort` | stapeldiagram, hanteldiagram |
-#' | `filter_column` | `interactive_filter_column` | stapeldiagram, cirkeldiagram, spridningsdiagram, histogram |
-#' | `filter_default` | `interactive_filter_default` | stapeldiagram, cirkeldiagram, spridningsdiagram, histogram |
-#' | `filter_same_y` | `interactive_filter_same_y` | stapeldiagram, histogram |
+#' | `sort` | `interactive_sort` | stapeldiagram, hanteldiagram, lådagram |
+#' | `filter_column` | `interactive_filter_column` | stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
+#' | `filter_default` | `interactive_filter_default` | stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
+#' | `filter_same_y` | `interactive_filter_same_y` | stapeldiagram, histogram, lådagram |
 #'
 #' @param ... Inställningar i familjen `interactive_*`, namngivna utan prefixet, t.ex.
 #'   `position = "right"` för `interactive_position`. Tabellen nedan visar vilka argument
@@ -708,9 +734,9 @@ d3_interactive <- function(...) func_d3_prefixa(list(...), "interactive_")      
 #' | Argument | Parameter | Finns i |
 #' |---|---|---|
 #' | `duration` | `animation_duration` | alla |
-#' | `play_interval` | `animation_play_interval` | koropletkarta, förändringskarta, täthetskarta, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram |
+#' | `play_interval` | `animation_play_interval` | koropletkarta, förändringskarta, täthetskarta, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram |
 #' | `draw` | `animation_draw` | linjediagram, hanteldiagram, cirkeldiagram |
-#' | `grow` | `animation_grow` | stapeldiagram, spridningsdiagram, histogram |
+#' | `grow` | `animation_grow` | stapeldiagram, spridningsdiagram, histogram, lådagram |
 #'
 #' @param ... Inställningar i familjen `animation_*`, namngivna utan prefixet, t.ex.
 #'   `position = "right"` för `animation_position`. Tabellen nedan visar vilka argument

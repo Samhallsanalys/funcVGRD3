@@ -43,6 +43,10 @@ Lagret tar egentligen vilka parametrar som helst med fullständiga namn, precis 
 \item cirkeldiagram: \code{colors}, \code{pie_border_color}, \code{pie_other_color}, \code{data_label_color},
 \code{data_label_box_color}, \code{data_label_glow_color}, \code{highlight_color},
 \code{group_highlight_unhighlighted_color}
+\item spridningsdiagram: \code{colors}, \code{point_border_color}, \code{trend_line_color},
+\code{data_label_color}, \code{data_label_box_color}
+\item histogram: \code{colors}, \code{bar_line_color}, \code{data_label_color}
+\item lådagram: \code{colors}, \code{box_line_color}, \code{data_label_color}
 }
 }
 \examples{

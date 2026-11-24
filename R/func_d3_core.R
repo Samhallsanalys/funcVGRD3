@@ -280,6 +280,8 @@ func_d3_skript_inbaddade <- function(beroenden) {
 # Storlekar: ggplot2-texter anges i punkter, geom_sf_text/linjebredder i mm
 func_d3_pt_till_px <- function(pt) pt * 96 / 72
 func_d3_mm_till_px <- function(mm) mm * 96 / 25.4
+# Punktradie i pixlar för ggplot2:s punktstorlek (size), som geom_point ritar den
+func_d3_punkt_px <- function(storlek) 0.375 * (storlek * 72.27 / 25.4 + 0.5 * 96 / 25.4 / 2) * 96 / 72
 
 # R-färgnamn ("grey80") finns inte i CSS — gör om allt till hex
 func_d3_farg <- function(x) {

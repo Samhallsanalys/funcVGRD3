@@ -26,12 +26,12 @@ Argument och var de finns (vad parametrarna gör står på diagramfunktionernas
 hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    Argument \tab Parameter \tab Finns i \cr
    \code{show} \tab \code{data_label_show} \tab koropletkarta, förändringskarta \cr
-   \code{text_size} \tab \code{data_label_text_size} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
+   \code{text_size} \tab \code{data_label_text_size} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram \cr
    \code{text_color} \tab \code{data_label_text_color} \tab koropletkarta, förändringskarta \cr
    \code{box} \tab \code{data_label_box} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
    \code{box_color} \tab \code{data_label_box_color} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
    \code{box_alpha} \tab \code{data_label_box_alpha} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
-   \code{decimals} \tab \code{data_label_decimals} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram \cr
+   \code{decimals} \tab \code{data_label_decimals} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram \cr
    \code{decimal} \tab \code{data_label_decimal} \tab koropletkarta \cr
    \code{glow} \tab \code{data_label_glow} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
    \code{glow_color} \tab \code{data_label_glow_color} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
@@ -56,7 +56,7 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{thousands_sep} \tab \code{data_label_thousands_sep} \tab förändringskarta \cr
    \code{zoom} \tab \code{data_label_zoom} \tab koropletkarta, förändringskarta \cr
    \code{zoom_overlap} \tab \code{data_label_zoom_overlap} \tab koropletkarta, förändringskarta \cr
-   \code{color} \tab \code{data_label_color} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
+   \code{color} \tab \code{data_label_color} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram \cr
    \code{format} \tab \code{data_label_format} \tab linjediagram, stapeldiagram, cirkeldiagram \cr
    \code{x_values} \tab \code{data_label_x_values} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
    \code{y_values} \tab \code{data_label_y_values} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr

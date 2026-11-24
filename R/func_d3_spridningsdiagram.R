@@ -352,22 +352,20 @@ func_d3_spridningsdiagram_bygg <- function(p) {
   df$.key <- if (!is.null(lab_col)) paste(df$.f, as.character(df[[lab_col]]), sep = "\r")
              else paste(df$.f, stats::ave(seq_len(nrow(df)), df$.k, df$.f, FUN = seq_along), sep = "\r")
 
-  # --- Punktradie i pixlar, som ggplot2 ritar geom_point (pch 16: 0,375 × teckenstorleken, inklusive kantlinje),
-  #     samma som func_d3_dumbbell och func_d3_karta_heatmap ---
-  punkt_px <- function(storlek) 0.375 * (storlek * 72.27 / 25.4 + 0.5 * 96 / 25.4 / 2) * 96 / 72
+  # --- Punktstorlek (radie i pixlar med func_d3_punkt_px()) ---
   size_legend <- NULL
   if (!is.null(size_col)) {
     # Samma skala som scale_size(range) i ggplot2, över alla filtervärden: ytan växer med värdet, från minsta
     # till största storleken i point_size_range
     sv <- df[[size_col]]; lim <- range(sv)
-    storlek <- function(v) punkt_px(scales::area_pal(p$point_size_range)(scales::rescale(v, from = lim)))
+    storlek <- function(v) func_d3_punkt_px(scales::area_pal(p$point_size_range)(scales::rescale(v, from = lim)))
     df$.r <- storlek(sv)
     brk <- scales::breaks_extended()(lim)
     brk <- brk[!is.na(brk) & brk >= lim[1] & brk <= lim[2]]
     size_legend <- list(title = p$point_size_title %||% size_col,
                         breaks = lapply(brk, function(b) list(label = func_d3_format_tal(b, 0), r = storlek(b))))
   } else {
-    df$.r <- rep(punkt_px(p$point_size), nrow(df))
+    df$.r <- rep(func_d3_punkt_px(p$point_size), nrow(df))
   }
 
   # --- Etiketter (samma text som func_graf_spridningsdiagram) ---
