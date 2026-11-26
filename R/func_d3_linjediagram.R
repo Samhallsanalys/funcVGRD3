@@ -576,11 +576,14 @@ func_d3_linjediagram_bygg <- function(p) {
         brk <- if (x_date_breaks == "auto")
           as.Date(scales::breaks_pretty(n = x_axis_n_breaks %||% 8)(c(as.numeric(as.Date(x_min_raw)), as.numeric(as.Date(x_max_raw)))), origin = "1970-01-01")
         else seq(as.Date(x_min_raw), as.Date(x_max_raw), by = x_date_breaks)
+        # Egna skalstreck (x_axis_breaks, bara ytdiagrammet) går före x_date_breaks och x_axis_n_breaks
+        if (!is.null(p$x_axis_breaks)) brk <- sort(unique(as.Date(p$x_axis_breaks)))
         if (!p$x_axis_clip_off) brk <- brk[brk >= as.Date(x_min_raw) & brk <= as.Date(x_max_raw)]
         x_ticks <- enc_x(brk)
         x_tick_labels <- format(brk, p$x_date_labels)
       } else {
-        brk <- scales::breaks_pretty(n = x_axis_n_breaks %||% 5)(c(x_min, x_max))
+        brk <- if (!is.null(p$x_axis_breaks)) sort(unique(as.numeric(p$x_axis_breaks)))
+               else scales::breaks_pretty(n = x_axis_n_breaks %||% 5)(c(x_min, x_max))
         # "whole" skriver as.integer(x), så brutna brytpunkter (2022.5) gav dubbla årtal
         if (p$x_number_format == "whole") brk <- brk[brk == round(brk)]
         if (!p$x_axis_clip_off) brk <- brk[brk >= x_min & brk <= x_max]

@@ -84,7 +84,8 @@ i hanteldiagrammet.
 linjediagrammet utom etiketter, markering, prognos och indexknappar. Med
 `area_type = "filled"` visar ytorna gruppernas andel av summan och y-axeln går från 0 till
 100 %. Den första gruppen hamnar överst, och tooltipen visar alla grupper vid x-värdet med
-värde, andel och summa.
+värde, andel och summa. `x_axis_breaks` anger skalstrecken på x-axeln, t.ex. årtal vartannat
+år.
 
 ```{r, code = exempel("func_d3_ytdiagram")}
 ```

@@ -40,6 +40,12 @@
 #'   `"bottom"` eller `"none"`.
 #' @param legend_reverse `TRUE` visar förklaringen i omvänd ordning (den nedersta ytan
 #'   först).
+#' @param x_axis_breaks Värdena för skalstrecken på en tal- eller datumaxel, t.ex.
+#'   `seq(1970, 2024, 2)` (årtal vartannat år) eller en vektor med datum. Går före
+#'   `x_axis_n_breaks` och `x_date_breaks`. Värden utanför data visas inte (om inte
+#'   `x_axis_min`/`x_axis_max` vidgar axeln), och med `x_number_format = "whole"` bara
+#'   heltal. Gäller inte kategorier, och inte i inzoomat läge, där skalstrecken väljs om.
+#'   `NULL` (standard) väljs automatiskt.
 #' @param y_axis_expand Luft på y-axeln utanför data och `y_axis_min`/`y_axis_max`, som
 #'   andel av spannet: `c(nedre, övre)`. `NULL` (standard) ger `c(0, 0.05)` för staplade
 #'   ytor och `c(0, 0)` för 100 %, så att ytorna börjar vid x-axeln.
@@ -112,6 +118,7 @@ func_d3_ytdiagram <- function(
   y_axis_line = TRUE,
   x_angle = 0,
   x_angle_auto = FALSE,
+  x_axis_breaks = NULL,
   x_axis_n_breaks = NULL,
 
   # === REFERENCE LINES AND SHADED PERIODS ===

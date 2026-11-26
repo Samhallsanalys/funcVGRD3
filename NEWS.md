@@ -18,7 +18,8 @@
 * `func_d3_ytdiagram()`: nytt interaktivt ytdiagram, staplat (`area_type = "stacked"`) eller
   100 % (`"filled"`), med samma argument som linjediagrammet utom etiketter, markering,
   prognos och indexknappar. Tooltipen visar alla grupper vid x-värdet med värde, andel och
-  summa. I `+`-syntaxen: `d3_area()`.
+  summa. `x_axis_breaks` anger skalstrecken på en tal- eller datumaxel, t.ex. årtal
+  vartannat år med `seq(1970, 2024, 2)`, som i stapeldiagrammet. I `+`-syntaxen: `d3_area()`.
 * `func_d3_stapeldiagram()`:
   * `data_label_column`: etikettexten ur en kolumn, med `\n` för ny rad, t.ex.
     "2 193 mdr kr\n(90,0 %)". Värdeaxeln får luft för etiketter med flera rader.

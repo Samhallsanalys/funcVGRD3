@@ -43,6 +43,7 @@ func_d3_ytdiagram(
   y_axis_line = TRUE,
   x_angle = 0,
   x_angle_auto = FALSE,
+  x_axis_breaks = NULL,
   x_axis_n_breaks = NULL,
   x_break_line = NULL,
   x_break_line_label = NULL,
@@ -178,6 +179,13 @@ inga, \code{"y"} = bara linjer från y-axeln (vågräta), \code{"x"} = bara linj
 
 \item{x_angle_auto}{\code{TRUE} roterar x-axelns text 45 grader automatiskt när det finns
 fler än 8 värden.}
+
+\item{x_axis_breaks}{Värdena för skalstrecken på en tal- eller datumaxel, t.ex.
+\code{seq(1970, 2024, 2)} (årtal vartannat år) eller en vektor med datum. Går före
+\code{x_axis_n_breaks} och \code{x_date_breaks}. Värden utanför data visas inte (om inte
+\code{x_axis_min}/\code{x_axis_max} vidgar axeln), och med \code{x_number_format = "whole"} bara
+heltal. Gäller inte kategorier, och inte i inzoomat läge, där skalstrecken väljs om.
+\code{NULL} (standard) väljs automatiskt.}
 
 \item{x_axis_n_breaks}{Antal markeringar på x-axeln. Fungerar för tal, datum och
 kategorier; första och sista värdet behålls alltid. \code{NULL} (standard) väljs
@@ -322,10 +330,10 @@ stallning$miljoner <- round(bas[as.character(stallning$grupp)] *
                               ifelse(stallning$land == "Danmark", 0.55, 1) *
                               (1 + 0.005 * (stallning$ar - 2005) + 0.03 * sin(stallning$ar + as.integer(stallning$grupp))), 2)
 
-# Enklaste anropet: staplade ytor, en per grupp (den första gruppen överst)
+# Staplade ytor, en per grupp (den första gruppen överst), med årtal vartannat år på x-axeln
 p1 <- func_d3_ytdiagram(stallning[stallning$land == "Sverige", ], x_value = "ar", y_value = "miljoner",
                         group = "grupp", title = "Befolkningen 16–64 år i Sverige",
-                        y_axis_title = "Miljoner personer")
+                        y_axis_title = "Miljoner personer", x_axis_breaks = seq(2006, 2024, 2))
 if (interactive()) p1   # visas i RStudio:s Viewer
 
 # 100 \%: gruppernas andel varje år, en panel per land. Håll muspekaren över diagrammet för
