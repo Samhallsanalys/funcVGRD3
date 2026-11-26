@@ -446,8 +446,12 @@
             .attr("stroke", col).attr("stroke-width", 1.42).attr("stroke-dasharray", "6 4");
           var lab = VR.label && VR.label.length ? VR.label[j % VR.label.length] : null;
           if (lab) {
-            grid.append("text").attr("x", HOR ? p + 5 : rect.x1 - 4).attr("y", HOR ? rect.y0 + 14 : p - 6)
-              .attr("text-anchor", HOR ? "start" : "end").attr("fill", col)
+            // y_break_line_label_side: "right" (standard) eller "left" om linjen
+            var vanster = VR.side && VR.side.length ? VR.side[j % VR.side.length] === "left" : false;
+            grid.append("text")
+              .attr("x", HOR ? (vanster ? p - 5 : p + 5) : (vanster ? rect.x0 + 4 : rect.x1 - 4))
+              .attr("y", HOR ? rect.y0 + 14 : p - 6)
+              .attr("text-anchor", HOR ? (vanster ? "end" : "start") : (vanster ? "start" : "end")).attr("fill", col)
               .attr("stroke", "#ffffff").attr("stroke-width", 3).attr("paint-order", "stroke")
               .style("font-size", (13 * (spec.text_scale || 1)) + "px").style("font-family", font).text(lab);
           }

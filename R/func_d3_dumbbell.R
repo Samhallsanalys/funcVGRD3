@@ -213,6 +213,11 @@
 #'   ingen text.
 #' @param y_break_line_color Linjernas färg, en per linje (återanvänds om de är
 #'   färre), t.ex. samma färger som perioderna.
+#' @param y_break_line_label_side Var texten från `y_break_line_label` står, en per linje
+#'   (återanvänds om de är färre): `"right"` (standard) eller `"left"`. I liggande hantlar
+#'   står texten till höger eller vänster om den lodräta linjen, t.ex. `c("right", "left")`
+#'   när två linjer ligger så nära att texterna annars krockar; i stående hantlar vid
+#'   linjens högra eller vänstra ände.
 #' @param reverse_categories `TRUE` vänder kategoriernas ordning på axeln. Liggande
 #'   hantlar ritas annars nerifrån, så att den första kategorin (efter `sort_axis_by`)
 #'   hamnar längst ned; med `TRUE` hamnar den överst, som i en tabell. Stående hantlar
@@ -405,6 +410,7 @@ func_d3_dumbbell <- function(
   y_break_line = NULL,
   y_break_line_label = NULL,
   y_break_line_color = "#000000",
+  y_break_line_label_side = "right",
 
   # === D3: AXES ===
   reverse_categories = FALSE,
@@ -464,6 +470,9 @@ func_d3_dumbbell_bygg <- function(p) {
   grid_ok <- function(v) isTRUE(v) || isFALSE(v) || identical(v, "x") || identical(v, "y")
   if (!grid_ok(p$show_major_grid)) stop("show_major_grid must be TRUE, FALSE, \"x\" or \"y\"")
   if (!grid_ok(p$show_minor_grid)) stop("show_minor_grid must be TRUE, FALSE, \"x\" or \"y\"")
+  if (!is.character(p$y_break_line_label_side) || length(p$y_break_line_label_side) == 0 ||
+      !all(p$y_break_line_label_side %in% c("right", "left")))
+    stop("y_break_line_label_side must be \"right\" or \"left\" (one per line)")
   if (!is.null(p$custom_theme))
     message("func_d3_dumbbell: custom_theme är ett ggplot2-tema och används inte i D3-versionen.")
   p$data_label_side <- match.arg(p$data_label_side, c("value", "period"))
@@ -668,9 +677,10 @@ func_d3_dumbbell_bygg <- function(p) {
     text_scale = p$text_scale,
     reverse = isTRUE(p$reverse_categories),
     value_format = p$y_axis_format,
-    # y_break_line: en etikett och färg per linje (återanvänds om de är färre)
+    # y_break_line: en etikett, färg och sida per linje (återanvänds om de är färre)
     value_ref = list(v = as.list(p$y_break_line[!is.na(p$y_break_line)]), label = as.list(p$y_break_line_label),
-                     color = as.list(func_d3_farg(p$y_break_line_color))),
+                     color = as.list(func_d3_farg(p$y_break_line_color)),
+                     side = as.list(p$y_break_line_label_side)),
     tooltip = list(show = p$tooltip_show,
                    decimals = func_d3_tooltip_decimaler(p$tooltip_decimals, c(wide$start_value, wide$end_value), 1),
                    unit = p$tooltip_unit %||% "", set_decimals = p$tooltip_decimals,

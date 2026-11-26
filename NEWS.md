@@ -41,6 +41,8 @@
   * `y_break_line`, `y_break_line_label` och `y_break_line_color`: streckade
     referenslinjer med text, t.ex. ett genomsnitt per period. Samma namn som i stapel-,
     linje-, spridnings- och lådagrammet, plus en färg per linje.
+    `y_break_line_label_side = "left"` sätter texten till vänster om linjen, t.ex. när två
+    linjer ligger så nära att texterna annars krockar.
   * `tooltip_unit_change`: enhet för förändringen i tooltipen, t.ex. " procentenheter".
   * `reverse_categories = TRUE` ger den första kategorin överst.
 * Flera diagramtyper:

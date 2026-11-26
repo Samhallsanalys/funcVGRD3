@@ -111,6 +111,7 @@ func_d3_dumbbell(
   y_break_line = NULL,
   y_break_line_label = NULL,
   y_break_line_color = "#000000",
+  y_break_line_label_side = "right",
   reverse_categories = FALSE,
   y_axis_format = "number",
   grid_major_color = "#e5e5e5",
@@ -418,6 +419,12 @@ ingen text.}
 \item{y_break_line_color}{Linjernas färg, en per linje (återanvänds om de är
 färre), t.ex. samma färger som perioderna.}
 
+\item{y_break_line_label_side}{Var texten från \code{y_break_line_label} står, en per linje
+(återanvänds om de är färre): \code{"right"} (standard) eller \code{"left"}. I liggande hantlar
+står texten till höger eller vänster om den lodräta linjen, t.ex. \code{c("right", "left")}
+när två linjer ligger så nära att texterna annars krockar; i stående hantlar vid
+linjens högra eller vänstra ände.}
+
 \item{reverse_categories}{\code{TRUE} vänder kategoriernas ordning på axeln. Liggande
 hantlar ritas annars nerifrån, så att den första kategorin (efter \code{sort_axis_by})
 hamnar längst ned; med \code{TRUE} hamnar den överst, som i en tabell. Stående hantlar
@@ -514,13 +521,15 @@ p4 <- func_d3_dumbbell(arbl, x_value = "kommun", y_value = "andel", group = "ar"
 if (interactive()) p4
 
 # Andelar (0–1) som procent med förändringen i procentenheter, punktens storlek efter
-# antalet arbetslösa, streckade linjer för ett snitt per år, kommunerna i dataordning med
-# den första överst och en underrubrik som radbryts efter 50 tecken
+# antalet arbetslösa, streckade linjer för ett snitt per år (texten för 2019 till vänster om
+# linjen, så att de två texterna inte krockar), kommunerna i dataordning med den första
+# överst och en underrubrik som radbryts efter 50 tecken
 arbl$kvot <- arbl$andel / 100
 p5 <- func_d3_dumbbell(arbl, x_value = "kommun", y_value = "kvot", group = "ar",
                        y_axis_format = "percent", point_size_column = "antal", point_size = 7,
                        y_break_line = c(0.065, 0.068), y_break_line_label = c("Snitt 2019", "Snitt 2024"),
                        y_break_line_color = c("#1a9fb3", "#ffc107"),
+                       y_break_line_label_side = c("left", "right"),
                        sort_axis_by = "original", reverse_categories = TRUE, subtitle_width = 50,
                        subtitle = "Punktens storlek visar antalet arbetslösa. Streckade linjer: snittet för kommunerna.")
 if (interactive()) p5
