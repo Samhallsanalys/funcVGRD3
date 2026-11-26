@@ -284,19 +284,20 @@
       var clipped = g.append("g").attr("clip-path", "url(#" + clipId + ")");
 
       var grid = clipped.append("g").attr("pointer-events", "none");
-      function gridLines(vals, isX, color) {
+      function gridLines(vals, isX, minor) {
         grid.selectAll(null).data(vals).enter().append("line")
           .attr("x1", function (v) { return isX ? xs(v) : rect.x0; }).attr("x2", function (v) { return isX ? xs(v) : rect.x1; })
           .attr("y1", function (v) { return isX ? rect.y0 : ys(v); }).attr("y2", function (v) { return isX ? rect.y1 : ys(v); })
-          .attr("stroke", color).attr("stroke-width", 1.42 * (color === "#f2f2f2" ? 0.5 : 1));
+          .attr("stroke", minor ? spec.grid.minor_color : spec.grid.major_color)
+          .attr("stroke-width", minor ? spec.grid.minor_width : spec.grid.major_width);   // grid_* (px)
       }
       function mids(v) { var o = []; for (var i = 1; i < v.length; i++) o.push((v[i - 1] + v[i]) / 2); return o; }
       function gridOn(setting, isX) { return setting === true || (setting === "x" && isX) || (setting === "y" && !isX); }
       var yv = yt.map(function (t) { return t.v; });
-      if (gridOn(spec.grid.minor, false)) gridLines(mids(yv), false, "#f2f2f2");
-      if (gridOn(spec.grid.minor, true)) gridLines(mids(xt), true, "#f2f2f2");
-      if (gridOn(spec.grid.major, false)) gridLines(yv, false, "#e5e5e5");
-      if (gridOn(spec.grid.major, true)) gridLines(xt, true, "#e5e5e5");
+      if (gridOn(spec.grid.minor, false)) gridLines(mids(yv), false, true);
+      if (gridOn(spec.grid.minor, true)) gridLines(mids(xt), true, true);
+      if (gridOn(spec.grid.major, false)) gridLines(yv, false, false);
+      if (gridOn(spec.grid.major, true)) gridLines(xt, true, false);
       if (hasFacets) {
         g.append("rect").attr("x", rect.x0).attr("y", rect.y0).attr("width", rect.x1 - rect.x0)
           .attr("height", rect.y1 - rect.y0).attr("fill", "none").attr("stroke", "#b3b3b3").attr("stroke-width", 0.85);

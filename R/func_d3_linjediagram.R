@@ -217,6 +217,22 @@
 #' @param width Diagrammets bredd i pixlar. Diagrammen (utom kartorna)
 #'   krymper för att få plats i fönstret.
 #' @param height Diagrammets höjd i pixlar.
+#' @param y_axis_expand Luft på y-axeln utanför data och `y_axis_min`/`y_axis_max`, som
+#'   andel av spannet: `c(nedre, övre)`, som `ggplot2::expansion(mult = ...)`. `NULL`
+#'   (standard) ger 5 % nedtill och 15 % upptill.
+#' @param y_axis_format Y-axelns format: `"number"` (standard) eller `"percent"` för
+#'   andelar mellan 0 och 1, som visas som procent ("82 %") på axeln, i tooltipen och i
+#'   etiketterna. `y_axis_min`, `y_axis_max` och `y_break_line` anges då som andelar.
+#'   Gäller värdeläget, inte index och förändring.
+#' @param grid_major_color Färg på de större stödlinjerna.
+#' @param grid_minor_color Färg på de mindre stödlinjerna.
+#' @param grid_major_width Tjocklek på de större stödlinjerna (ggplot2:s `linewidth`).
+#' @param grid_minor_width Tjocklek på de mindre stödlinjerna (ggplot2:s `linewidth`).
+#' @param tooltip_x_format Hur x-värdet skrivs som rubrik i tooltipen: ett datumformat
+#'   (strftime) för en datumaxel, t.ex. `"%Y"`, eller en funktion som tar x-värdena och
+#'   returnerar text, t.ex. `function(x) paste(x, "år")`. `NULL` (standard) ger
+#'   `as.character()` av x-värdet.
+#' @param legend_reverse `TRUE` visar förklaringen i omvänd ordning.
 #' @param .rendera Intern. `TRUE` bygger diagrammet och används när objektet skrivs ut.
 #'   Ändra inte.
 #'
@@ -224,7 +240,8 @@
 #'   i HTML-dokument från R Markdown och Quarto och på sidan från "Run examples" i
 #'   hjälpen. Spara det med [func_d3_spara()].
 #'   Med `debug = TRUE` returneras i stället en lista med diagnostik.
-#' @seealso [func_d3_stapeldiagram()], [d3_plot()] och [func_d3_spara()].
+#' @seealso [func_d3_stapeldiagram()], [func_d3_ytdiagram()], [d3_plot()] och
+#'   [func_d3_spara()].
 #' @export
 #' @example inst/examples/func_d3_linjediagram.R
 func_d3_linjediagram <- function(
@@ -389,6 +406,21 @@ func_d3_linjediagram <- function(
   # === D3: SIZE ===
   width = 1400,
   height = 800,
+
+  # --- Tillagda i 0.15.0 (sist, så att positionella anrop inte flyttas) ---
+  # === D3: AXES ===
+  y_axis_expand = NULL,
+  y_axis_format = "number",
+
+  # === D3: GRID LINES ===
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
+
+  # === D3: TOOLTIP AND LEGEND ===
+  tooltip_x_format = NULL,
+  legend_reverse = FALSE,
   .rendera = FALSE
 ) {
 
@@ -430,6 +462,7 @@ func_d3_linjediagram_bygg <- function(p) {
   missing_cols  <- setdiff(required_cols, names(df_work))
   if (length(missing_cols) > 0) stop("Missing columns in data: ", paste(missing_cols, collapse = ", "))
   if (!is.numeric(df_work[[y_value]])) stop("func_d3_linjediagram: y_value ('", y_value, "') måste vara numerisk.")
+  func_d3_kontrollera_yaxel(p)
   grid_ok <- function(v) isTRUE(v) || isFALSE(v) || identical(v, "x") || identical(v, "y")
   if (!grid_ok(p$show_major_grid)) stop("show_major_grid must be TRUE, FALSE, \"x\" or \"y\"")
   if (!grid_ok(p$show_minor_grid)) stop("show_minor_grid must be TRUE, FALSE, \"x\" or \"y\"")
@@ -536,6 +569,7 @@ func_d3_linjediagram_bygg <- function(p) {
       x_min <- enc_x(x_min_raw); x_max <- enc_x(x_max_raw)
       right_pct <- if (p$x_axis_clip_off) 0.25 else 0.10
       x_domain <- c(x_min - (x_max - x_min) * 0.05, x_max + (x_max - x_min) * right_pct)
+      if (!is.null(p$.area)) x_domain <- c(x_min, x_max)   # ytdiagram: ytorna går ut till axlarna
       if (x_max == x_min) x_domain <- x_domain + c(-1, 1) * (if (is_date) 86400000 * 180 else 0.5)
       if (is_date) {
         # x_axis_n_breaks gäller även datum (som func_graf_linjediagram; var alltid n = 8)
@@ -561,6 +595,7 @@ func_d3_linjediagram_bygg <- function(p) {
       x_ticks <- keep_idx - 1
       x_tick_labels <- x_levels[keep_idx]
       x_domain <- if (n_lev > 1) c(-0.05, 1.05) * (n_lev - 1) else c(-0.5, 0.5)
+      if (!is.null(p$.area) && n_lev > 1) x_domain <- c(0, n_lev - 1)
     }
   }
 
@@ -625,6 +660,8 @@ func_d3_linjediagram_bygg <- function(p) {
   tt_kol <- func_d3_tooltip_kolumner(df_work, p$tooltip_columns, p$tooltip_decimals, p$data_label_decimals)
   tt_namn <- tt_kol$namn
   df_work[tt_namn] <- tt_kol$values
+  # tooltip_x_format får hela x-kolumnen på en gång (som i stapeldiagrammet), inte en serie i taget
+  df_work$.x_tt <- func_d3_x_tooltip(df_work[[x_value]], p$tooltip_x_format)
   df_sorted <- df_work[order(df_work$.f, df_work$.g, df_work$.x), , drop = FALSE]
   har_band <- !is.null(p$line_band_lower) && !is.null(p$line_band_upper)
   serier <- list()
@@ -635,7 +672,7 @@ func_d3_linjediagram_bygg <- function(p) {
       facet = f, group = g,
       x = as.list(d$.x),
       y = as.list(d[[y_value]]),
-      x_text = as.list(as.character(d[[x_value]])),
+      x_text = as.list(d$.x_tt),   # tooltipens rubrik (tooltip_x_format)
       lo = if (har_band) as.list(d[[p$line_band_lower]]) else NULL,
       hi = if (har_band) as.list(d[[p$line_band_upper]]) else NULL)
     # En lista per kolumn, parallell med x (NA -> null, visas inte)
@@ -707,7 +744,7 @@ func_d3_linjediagram_bygg <- function(p) {
     x = list(type = x_typ, domain = x_domain, ticks = as.list(x_ticks), tick_labels = as.list(x_tick_labels),
              levels = as.list(x_levels), angle = x_angle, date_format = p$x_date_labels,
              number_format = p$x_number_format, n_breaks = x_axis_n_breaks %||% 5, clip_off = p$x_axis_clip_off),
-    y = list(min = p$y_axis_min, max = p$y_axis_max),
+    y = list(min = p$y_axis_min, max = p$y_axis_max, expand = p$y_axis_expand %||% c(0.05, 0.15), format = p$y_axis_format),
     facets = list(levels = as.list(facet_levels), ncol = ncol_val, same_y = p$facet_same_y_scale || is.null(facet_var),
                   wrapped = !is.null(facet_var) && any(grepl("\n", facet_levels))),
     groups = grupper,
@@ -717,9 +754,10 @@ func_d3_linjediagram_bygg <- function(p) {
                 band = har_band, band_alpha = p$line_band_alpha),
     legend = list(position = p$legend_position, title = if (!is.null(group)) (p$legend_title %||% group) else NULL,
                   text_size = func_d3_pt_till_px(p$legend_text_size), title_size = func_d3_pt_till_px(11 * p$text_scale),
-                  direct = p$legend_direct),
+                  direct = p$legend_direct, reverse = isTRUE(p$legend_reverse)),
+    area = p$.area,   # ytdiagram (func_d3_ytdiagram): list(type, alpha, line_color, line_width), annars NULL
     text_scale = p$text_scale,   # för D3-egna etiketter (referenslinjer, skuggade perioder, prognos)
-    grid = list(major = p$show_major_grid, minor = p$show_minor_grid),   # TRUE/FALSE/"x"/"y"
+    grid = func_d3_stodlinjer(p),   # major/minor: TRUE/FALSE/"x"/"y", färg och tjocklek
     axis_line = list(x = p$x_axis_line, y = p$y_axis_line),
     # Etiketter som listor: en per linje (återanvänds om de är färre än linjerna)
     ref = list(x = enc_x_safe(p$x_break_line), x_label = as.list(p$x_break_line_label),

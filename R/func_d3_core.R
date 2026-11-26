@@ -97,8 +97,14 @@ func_d3_namnalias <- list(
   data_label_text_color      = "data_label_color",
   data_label_first_last      = "data_label_only_first_last",        # linje/stapel | dumbbell
   data_label_only_first_last = "data_label_first_last",
-  animation_draw             = "animation_grow",                    # linje/dumbbell/cirkel | stapel
-  animation_grow             = "animation_draw"
+  animation_draw             = "animation_grow",                    # linje/yt/dumbbell/cirkel | stapel
+  animation_grow             = "animation_draw",
+  bar_type                   = "area_type",                         # stapel | yt ("stacked"/"filled")
+  area_type                  = "bar_type",
+  bar_line_color             = "area_line_color",                   # stapel | yt (kantlinjen)
+  area_line_color            = "bar_line_color",
+  bar_line_width             = "area_line_width",
+  area_line_width            = "bar_line_width"
 )
 
 # Byter ut alias mot det namn diagramtypen faktiskt använder
@@ -315,7 +321,60 @@ func_d3_rader <- function(text, bredd = NULL) {
   as.list(strsplit(rader, "\n", fixed = TRUE)[[1]])
 }
 
-# Gemensam regel för tooltip_decimals i alla func_d3_*: ett angivet värde används som det är;
+# Radbryter varje rad i en text för sig (str_wrap slår annars ihop raderna): "\n" ger alltid en ny rad,
+# och bredd = NULL ger bara de raderna. Används för kategoriaxelns text (x_axis_text_wrap). Returnerar
+# text med "\n", som JavaScript delar upp i rader.
+func_d3_radbryt <- function(text, bredd = NULL) {
+  vapply(as.character(text), function(t) {
+    if (is.na(t) || !nzchar(t)) return(t)
+    rader <- strsplit(t, "\n", fixed = TRUE)[[1]]
+    if (!is.null(bredd) && bredd > 0) rader <- vapply(rader, stringr::str_wrap, character(1), width = bredd, USE.NAMES = FALSE)
+    paste(rader, collapse = "\n")
+  }, character(1), USE.NAMES = FALSE)
+}
+
+# Stödlinjerna (show_*_grid och grid_*) i alla diagram som har dem. Tjockleken anges som ggplot2:s
+# linewidth och blir pixlar avrundade till hundradelar (0,5 -> 1,42 px och 0,25 -> 0,71 px, som förut)
+func_d3_stodlinjer <- function(p) {
+  for (n in c("grid_major_width", "grid_minor_width"))
+    if (!is.numeric(p[[n]]) || length(p[[n]]) != 1 || is.na(p[[n]]) || p[[n]] < 0) stop("vgr_D3: ", n, " ska vara ett tal >= 0.")
+  for (n in c("grid_major_color", "grid_minor_color"))
+    if (!is.character(p[[n]]) || length(p[[n]]) != 1 || is.na(p[[n]]) || inherits(try(grDevices::col2rgb(p[[n]]), silent = TRUE), "try-error"))
+      stop("vgr_D3: ", n, " ska vara en färg, t.ex. \"#e5e5e5\" eller \"grey80\".")
+  list(major = p$show_major_grid, minor = p$show_minor_grid,
+       # tolower: samma text i SVG:en som de tidigare fasta färgerna ("#e5e5e5")
+       major_color = tolower(func_d3_farg(p$grid_major_color)), minor_color = tolower(func_d3_farg(p$grid_minor_color)),
+       major_width = round(p$grid_major_width * 72.27 / 25.4, 2), minor_width = round(p$grid_minor_width * 72.27 / 25.4, 2))
+}
+
+# Tooltipens rubrik för x-värdena (tooltip_x_format): NULL = as.character(x), en text = datumformat
+# (strftime) för en datumaxel, en funktion = det den returnerar för hela x-vektorn
+func_d3_x_tooltip <- function(x, x_format = NULL) {
+  if (is.null(x_format)) return(as.character(x))
+  if (is.function(x_format)) {
+    ut <- as.character(x_format(x))
+    if (length(ut) != length(x)) stop("vgr_D3: tooltip_x_format ska returnera en text per x-värde.")
+    return(ut)
+  }
+  if (!is.character(x_format) || length(x_format) != 1 || is.na(x_format))
+    stop("vgr_D3: tooltip_x_format ska vara ett datumformat, t.ex. \"%Y\", eller en funktion.")
+  if (!inherits(x, c("Date", "POSIXt")))
+    stop("vgr_D3: tooltip_x_format som text är ett datumformat och kräver en datumaxel. ",
+         "Ange en funktion för andra x-värden, t.ex. function(x) paste(x, \"år\").")
+  format(x, x_format)
+}
+
+# Kontroll av y_axis_format ("number"/"percent") och y_axis_expand (NULL eller c(nedre, övre) >= 0)
+func_d3_kontrollera_yaxel <- function(p) {
+  if (!is.character(p$y_axis_format) || length(p$y_axis_format) != 1 || !p$y_axis_format %in% c("number", "percent"))
+    stop("vgr_D3: y_axis_format ska vara \"number\" eller \"percent\".")
+  e <- p$y_axis_expand
+  if (!is.null(e) && (!is.numeric(e) || length(e) != 2 || anyNA(e) || any(e < 0)))
+    stop("vgr_D3: y_axis_expand ska vara två tal >= 0, c(nedre, övre), t.ex. c(0, 0.05).")
+  invisible(TRUE)
+}
+
+# Gemensam regel för tooltip_decimals i alla func_d3_*:ett angivet värde används som det är;
 # NULL = 0 om alla värden är heltal, annars samma antal som dataetiketterna. min_decimaler används
 # av kartorna så att tooltipen aldrig visar färre decimaler än klassgränserna (breaks_decimals).
 func_d3_tooltip_decimaler <- function(tooltip_decimals, varden, etikett_decimaler = 1, min_decimaler = 0) {

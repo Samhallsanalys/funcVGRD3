@@ -33,8 +33,21 @@ p4 <- func_d3_dumbbell(arbl, x_value = "kommun", y_value = "andel", group = "ar"
                        title = "Arbetslöshet 2019 och 2024")
 if (interactive()) p4
 
+# Andelar (0–1) som procent med förändringen i procentenheter, punktens storlek efter
+# antalet arbetslösa, streckade linjer för ett snitt per år, kommunerna i dataordning med
+# den första överst och en underrubrik som radbryts efter 50 tecken
+arbl$kvot <- arbl$andel / 100
+p5 <- func_d3_dumbbell(arbl, x_value = "kommun", y_value = "kvot", group = "ar",
+                       y_axis_format = "percent", point_size_column = "antal", point_size = 7,
+                       y_break_line = c(0.065, 0.068), y_break_line_label = c("Snitt 2019", "Snitt 2024"),
+                       y_break_line_color = c("#1a9fb3", "#ffc107"),
+                       sort_axis_by = "original", reverse_categories = TRUE, subtitle_width = 50,
+                       subtitle = "Punktens storlek visar antalet arbetslösa. Streckade linjer: snittet för kommunerna.")
+if (interactive()) p5
+
 # Spara alla diagram ovan i samma fristående HTML-fil (här i en temporär katalog).
 # Namnen i listan blir rubriker i filen.
 func_d3_spara(list("Hanteldiagram" = p1, "Färgat efter förändring" = p2,
-                   "Stående hantlar" = p3, "Större text och lodräta stödlinjer" = p4),
+                   "Stående hantlar" = p3, "Större text och lodräta stödlinjer" = p4,
+                   "Andelar, storlek och snittlinjer" = p5),
               tempfile(fileext = ".html"))

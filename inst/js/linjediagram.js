@@ -42,7 +42,9 @@
     spec.highlight.groups.forEach(function (g) { hlSet[g] = true; });
     var hasFacets = !(F.levels.length === 1 && F.levels[0] === "__alla");
 
-    var state = { mode: "varde", hidden: {}, xDomain: null, hoverGroup: null, first: true };
+    var state = { mode: "varde", hidden: {}, xDomain: null, hoverGroup: null, first: true, stack: null };
+    var AR = spec.area || null;          // ytdiagram (func_d3_ytdiagram): {type, alpha, line_color, line_width}
+    var PCT_SUFFIX = " %";          // hårt mellanslag: "%" bryts aldrig till en egen rad
 
     // -------------------------------------------------------------------------
     //  Index/förändring: basvärde per serie
@@ -71,7 +73,13 @@
     }
     // Index och förändring (%) har 1 decimal om inte tooltip_decimals är angivet
     function modeDecimals() { return state.mode === "varde" ? TT.decimals : (TT.set_decimals != null ? TT.set_decimals : 1); }
-    function modeUnit() { return state.mode === "varde" ? TT.unit : (state.mode === "forandring" ? " %" : ""); }
+    // y_axis_format = "percent" (värdeläget): talen x 100 och " %" (tooltip_unit ersätter "%" om den angetts)
+    function pctMode() { return state.mode === "varde" && (spec.y.format === "percent" || (!!AR && AR.type === "filled")); }
+    function pctValues() { return state.mode === "varde" && spec.y.format === "percent"; }
+    function modeUnit() { return pctValues() ? (TT.unit || PCT_SUFFIX) : modeUnit0(); }
+    // Värde som text i tooltip och etiketter (procent: x 100, utan enhet — modeUnit/labelText lägger till den)
+    function fmtShown(v, dec) { return fmtV(pctValues() ? 100 * v : v, dec); }
+    function modeUnit0() { return state.mode === "varde" ? TT.unit : (state.mode === "forandring" ? " %" : ""); }
     function fmtV(v, dec) { return vgrD3.fmt(v, dec == null ? modeDecimals() : dec, " "); }
 
     function isVisible(s) { return !state.hidden[s.group]; }
@@ -89,12 +97,13 @@
       return null;
     }
 
+    // Tooltipens rubrik: seriernas x_text (tooltip_x_format, annars x-värdet som text), sedan kategorin/datumet
     function xText(x) {
-      if (X.type === "discrete") return X.levels[x];
       for (var i = 0; i < spec.series.length; i++) {
         var k = spec.series[i].x.indexOf(x);
         if (k >= 0) return spec.series[i].x_text[k];
       }
+      if (X.type === "discrete") return X.levels[x];
       return X.type === "date" ? vgrD3.timeLocale.utcFormat("%Y-%m-%d")(new Date(x)) : vgrD3.fmt(x, 0, null);
     }
 
@@ -103,7 +112,19 @@
     // -------------------------------------------------------------------------
     function yDomainFor(facets) {
       var lo = Infinity, hi = -Infinity;
-      spec.series.forEach(function (s) {
+      // Ytdiagram: staplade ytor från noll (100 %: 0–1)
+      if (AR) {
+        lo = 0; hi = AR.type === "filled" ? 1 : 0;
+        facets.forEach(function (f) {
+          var st = state.stack[f];
+          if (!st) return;
+          st.xs.forEach(function (x) {
+            if (!inX(x)) return;
+            Object.keys(st.g).forEach(function (k) { lo = Math.min(lo, st.g[k].y1[x]); hi = Math.max(hi, st.g[k].y1[x]); });
+          });
+        });
+      }
+      if (!AR) spec.series.forEach(function (s) {
         if (facets.indexOf(s.facet) < 0 || !isVisible(s)) return;
         for (var i = 0; i < s.x.length; i++) {
           if (!inX(s.x[i])) continue;
@@ -113,15 +134,16 @@
           });
         }
       });
-      refY().forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });
+      // (100 % ytdiagram: axeln är 0–1, referenslinjer i dataenheter får inte bredda den)
+      if (!(AR && AR.type === "filled")) refY().forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });
       if (!isFinite(lo)) { lo = 0; hi = 1; }
       if (state.mode === "varde") {
         if (spec.y.min != null) lo = spec.y.min;
         if (spec.y.max != null) hi = spec.y.max;
       }
       if (lo === hi) { lo -= Math.abs(lo) * 0.1 || 1; hi += Math.abs(hi) * 0.1 || 1; }
-      var span = hi - lo;
-      return [lo - span * 0.05, hi + span * 0.15];
+      var span = hi - lo, ex = spec.y.expand || [0.05, 0.15];   // y_axis_expand
+      return [lo - span * ex[0], hi + span * ex[1]];
     }
     function refY() {
       if (state.mode === "index") return [100];
@@ -132,6 +154,10 @@
     function yTicks(ys) {
       var ticks = ys.ticks(5);
       var step = ticks.length > 1 ? ticks[1] - ticks[0] : 1;
+      if (pctMode()) {   // andelar 0–1 som "82 %" (y_axis_format = "percent", 100 % ytdiagram)
+        var qdec = Math.max(0, d3.precisionFixed(step * 100));
+        return ticks.map(function (t) { return { v: t, label: fmtV(t * 100, qdec) + PCT_SUFFIX }; });
+      }
       var dec = d3.precisionFixed(step);
       return ticks.map(function (t) { return { v: t, label: vgrD3.fmt(t, dec, " ") }; });
     }
@@ -181,6 +207,7 @@
       var items = groups.map(function (g) {
         return { g: g, w: swatchW + 6 + vgrD3.measureText(svg, g.label, L.text_size, font) };
       });
+      if (L.reverse) items.reverse();   // legend_reverse (ytdiagram)
       var titleW = L.title ? vgrD3.measureText(svg, L.title, L.title_size, font) : 0;
       // Lodrät legend: titel ovanför. Vågrät legend: titel till vänster på första raden (som ggplot2)
       var titleH = L.title && vertical ? L.title_size * 1.6 : 0;
@@ -215,7 +242,11 @@
         .attr("opacity", function (it) { return state.hidden[it.g.key] ? 0.35 : 1; })
         .style("cursor", IA.legend ? "pointer" : null);
       item.append("rect").attr("width", it => it.w).attr("height", rowH).attr("fill", "#ffffff").attr("fill-opacity", 0);
-      item.append("line")
+      // Ytdiagram: en ruta i ytans färg (som stapeldiagrammets förklaring), annars en linje
+      if (AR) item.append("rect").attr("y", (rowH - swatchW) / 2).attr("width", swatchW).attr("height", swatchW)
+        .attr("fill", function (it) { return it.g.color; }).attr("fill-opacity", AR.alpha)
+        .attr("stroke", AR.line_color || "none").attr("stroke-width", AR.line_color ? AR.line_width : 0);
+      else item.append("line")
         .attr("x1", 0).attr("x2", swatchW).attr("y1", rowH / 2).attr("y2", rowH / 2)
         .attr("stroke", function (it) { return it.g.color; })
         .attr("stroke-opacity", function (it) { return it.g.opacity; })
@@ -242,9 +273,46 @@
       }
     }
 
+    // Ytdiagram: staplade ytor per panel. Den första gruppen hamnar överst (som ggplot2:s position_stack) och ett
+    // x som saknas i en grupp räknas som 0. 100 % ("filled"): varje x delas med summan där. Returnerar per panel
+    // {xs (sorterade x), g: {grupp: {y0, y1}} (per x), val: {grupp: {x: värde}}, tot: {x: summa}}
+    function computeStacks() {
+      var out = {};
+      var bottomUp = groups.map(function (g) { return g.key; }).reverse();
+      F.levels.forEach(function (f) {
+        var list = seriesIn(f).filter(isVisible), seen = {}, xs = [], val = {}, tot = {}, base = {}, st = {};
+        list.forEach(function (s) {
+          var m = {};
+          s.x.forEach(function (x, i) {
+            // Första raden per x (som dokumentationen); null = saknas (0 i staplingen, "–" i tooltipen)
+            if (!Object.prototype.hasOwnProperty.call(m, x)) m[x] = s.y[i];
+            if (!seen[x]) { seen[x] = true; xs.push(x); }
+          });
+          val[s.group] = m;
+        });
+        xs.sort(function (a, b) { return a - b; });
+        xs.forEach(function (x) {
+          base[x] = 0; tot[x] = 0;
+          list.forEach(function (s) { tot[x] += val[s.group][x] || 0; });
+        });
+        bottomUp.forEach(function (key) {
+          if (!val[key]) return;
+          var y0 = {}, y1 = {};
+          xs.forEach(function (x) {
+            var v = val[key][x] || 0;
+            if (AR.type === "filled") v = tot[x] ? v / tot[x] : 0;
+            y0[x] = base[x]; y1[x] = base[x] + v; base[x] = y1[x];
+          });
+          st[key] = { y0: y0, y1: y1 };
+        });
+        out[f] = { xs: xs, g: st, val: val, tot: tot };
+      });
+      return out;
+    }
+
     function setHoverGroup(key) {
       state.hoverGroup = key;
-      svg.selectAll(".vgr-line, .vgr-band").attr("opacity", function () {
+      svg.selectAll(".vgr-line, .vgr-band, .vgr-area").attr("opacity", function () {
         var g = this.getAttribute("data-group");
         var base = +this.getAttribute("data-opacity");
         return key == null || g === key ? base : base * 0.15;
@@ -283,6 +351,7 @@
       tip.hide();
       panels = [];
       state.labelDomain = null;   // räknas om i layoutPanels när panelbredden är känd
+      state.stack = AR ? computeStacks() : null;   // ytdiagram: dolda grupper staplas inte
       svg.append("rect").attr("width", W).attr("height", H).attr("fill", "#ffffff");
 
       var m = { t: pt(hasFacets && F.wrapped ? 20 : 15), r: pt(10), b: pt(10), l: pt(10) };
@@ -403,22 +472,23 @@
 
       // Rutnät
       var grid = clipped.append("g").attr("pointer-events", "none");
-      function gridLines(vals, isX, color) {
+      var GR = spec.grid;   // färg och tjocklek: grid_* (px)
+      function gridLines(vals, isX, minor) {
         grid.selectAll(null).data(vals).enter().append("line")
           .attr("x1", function (v) { return isX ? xs(v) : rect.x0; })
           .attr("x2", function (v) { return isX ? xs(v) : rect.x1; })
           .attr("y1", function (v) { return isX ? rect.y0 : ys(v); })
           .attr("y2", function (v) { return isX ? rect.y1 : ys(v); })
-          .attr("stroke", color).attr("stroke-width", 1.42 * (color === "#f2f2f2" ? 0.5 : 1));
+          .attr("stroke", minor ? GR.minor_color : GR.major_color).attr("stroke-width", minor ? GR.minor_width : GR.major_width);
       }
       function mids(v) { var o = []; for (var i = 1; i < v.length; i++) o.push((v[i - 1] + v[i]) / 2); return o; }
       // true/false eller "x"/"y": linjer från x-axeln (lodräta) resp. y-axeln (vågräta)
       function gridOn(setting, isX) { return setting === true || (setting === "x" && isX) || (setting === "y" && !isX); }
-      var GMIN = spec.grid.minor, GMAJ = spec.grid.major;
-      if (gridOn(GMIN, false)) gridLines(mids(yt.map(function (t) { return t.v; })), false, "#f2f2f2");
-      if (gridOn(GMIN, true) && X.type !== "discrete") gridLines(mids(xt.map(function (t) { return t.v; })), true, "#f2f2f2");
-      if (gridOn(GMAJ, false)) gridLines(yt.map(function (t) { return t.v; }), false, "#e5e5e5");
-      if (gridOn(GMAJ, true)) gridLines(xt.map(function (t) { return t.v; }), true, "#e5e5e5");
+      var GMIN = GR.minor, GMAJ = GR.major;
+      if (gridOn(GMIN, false)) gridLines(mids(yt.map(function (t) { return t.v; })), false, true);
+      if (gridOn(GMIN, true) && X.type !== "discrete") gridLines(mids(xt.map(function (t) { return t.v; })), true, true);
+      if (gridOn(GMAJ, false)) gridLines(yt.map(function (t) { return t.v; }), false, false);
+      if (gridOn(GMAJ, true)) gridLines(xt.map(function (t) { return t.v; }), true, false);
 
       // Markerade perioder
       spec.shades.forEach(function (s) {
@@ -430,6 +500,27 @@
             .attr("fill", "#546e7a").style("font-size", (13 * (spec.text_scale || 1)) + "px").style("font-family", font).text(s.label);
         }
       });
+
+      // Ytdiagram: ytorna nerifrån och upp, under referenslinjerna. Kantlinjen (area_line_color) följer ytans överkant
+      if (AR && state.stack[facet]) {
+        var st = state.stack[facet], areaG = clipped.append("g");
+        groups.map(function (g) { return g.key; }).reverse().forEach(function (key) {
+          var s0 = st.g[key];
+          if (!s0) return;
+          var gr = groupByKey[key];
+          var pts = st.xs.map(function (x) { return { x: x, y0: s0.y0[x], y1: s0.y1[x] }; });
+          var path = areaG.append("path").attr("class", "vgr-area").attr("data-group", key)
+            .attr("data-opacity", AR.alpha).attr("opacity", AR.alpha).attr("fill", gr.color).attr("pointer-events", "none")
+            .attr("d", d3.area().x(function (d) { return xs(d.x); }).y0(function (d) { return ys(d.y0); })
+                                .y1(function (d) { return ys(d.y1); })(pts));
+          if (AR.line_color) {
+            areaG.append("path").attr("class", "vgr-area").attr("data-group", key).attr("data-opacity", 1)
+              .attr("fill", "none").attr("stroke", AR.line_color).attr("stroke-width", AR.line_width).attr("pointer-events", "none")
+              .attr("d", d3.line().x(function (d) { return xs(d.x); }).y(function (d) { return ys(d.y1); })(pts));
+          }
+          if (state.first && spec.animation.draw && dur > 0) path.attr("opacity", 0).transition().duration(dur).attr("opacity", AR.alpha);
+        });
+      }
 
       // Panelram (facetter)
       if (hasFacets) {
@@ -472,8 +563,8 @@
         }
       }
 
-      // Band och linjer (bleka först, markerade sist)
-      var list = seriesIn(facet).filter(isVisible);
+      // Band och linjer (bleka först, markerade sist). Ytdiagrammet har ritat ytorna ovan
+      var list = AR ? [] : seriesIn(facet).filter(isVisible);
       list.sort(function (a, b) {
         var ga = groupByKey[a.group], gb = groupByKey[b.group];
         return (gb.faded - ga.faded) || (ga.line_size - gb.line_size);
@@ -601,7 +692,7 @@
       return s ? tr(s.y[s.x.indexOf(p.x)], s) : null;
     }
     function labelText(p, v) {
-      var text = fmtV(v, state.mode === "varde" ? LB.decimals : 1);
+      var text = fmtShown(v, state.mode === "varde" ? LB.decimals : 1) + (pctValues() ? PCT_SUFFIX : "");
       if (LB.format === "x_y" || LB.format === "both") text = p.x_text + ": " + text;
       if (LB.show_group) text = groupByKey[p.group].label + LB.separator + text;
       return text;
@@ -738,6 +829,7 @@
       var hg = panel.hoverG;
       hg.selectAll("*").remove();
       if (!TT.show) return;
+      if (AR) { hoverArea(panel, event, mx); return; }
       var list = seriesIn(panel.facet).filter(isVisible);
       if (!list.length) return;
       var mode = TT.mode === "auto" ? (list.length > 12 ? "nearest" : "all") : TT.mode;
@@ -793,11 +885,42 @@
       }
     }
 
+    // Ytdiagram: hårkors vid närmaste x med alla synliga grupper i staplingsordning (översta först), värdet,
+    // andelen av summan och summan. Punkterna ritas på varje ytas överkant
+    function hoverArea(panel, event, mx) {
+      var st = state.stack[panel.facet], hg = panel.hoverG;
+      var xsIn = st ? st.xs.filter(inX) : [];
+      if (!xsIn.length) return;
+      var xv = panel.xs.invert(mx);
+      var xc = xsIn.reduce(function (best, x) { return Math.abs(x - xv) < Math.abs(best - xv) ? x : best; }, xsIn[0]);
+      var px = panel.xs(xc), dec = modeDecimals(), unit = modeUnit(), tot = st.tot[xc];
+      hg.append("line").attr("x1", px).attr("x2", px).attr("y1", panel.rect.y0).attr("y2", panel.rect.y1)
+        .attr("stroke", "#90a4ae").attr("stroke-width", 1);
+      var html = "<div class='vgr-tt-title'>" + esc(xText(xc)) + "</div>";
+      if (hasFacets) html += "<div class='vgr-tt-sub'>" + esc(panel.facet) + "</div>";
+      var n = 0;
+      groups.forEach(function (gr) {
+        var s0 = st.g[gr.key], raw = st.val[gr.key] ? st.val[gr.key][xc] : undefined;
+        if (!s0 || raw === undefined) return;
+        n++;
+        hg.append("circle").attr("cx", px).attr("cy", panel.ys(s0.y1[xc])).attr("r", 3.5)
+          .attr("fill", gr.color).attr("stroke", "#ffffff").attr("stroke-width", 1.5);
+        if (raw == null) { html += vgrD3.tooltipRow(spec.has_groups ? gr.label : (T.y_axis_title || "Värde"), "–", gr.base_color); return; }
+        var txt = fmtShown(raw, dec) + unit;
+        if (tot) txt += " (" + vgrD3.fmt(100 * raw / tot, TT.set_decimals != null ? TT.set_decimals : 0, null) + PCT_SUFFIX + ")";
+        var s = seriesOf(panel.facet, gr.key);
+        html += vgrD3.tooltipRow(spec.has_groups ? gr.label : (T.y_axis_title || "Värde"), txt, gr.base_color);
+        if (s) html += extraRows({ s: s, i: s.x.indexOf(xc) }, true);
+      });
+      if (n > 1) html += vgrD3.tooltipRow("Totalt", fmtShown(tot, dec) + unit);
+      tip.show(html, event);
+    }
+
     function rowHtml(r, dec, unit, indent) {
-      var txt = fmtV(r.v, dec) + unit;
+      var txt = fmtShown(r.v, dec) + unit;
       if (r.s.lo && r.s.hi) {
         var lo = tr(r.s.lo[r.i], r.s), hi = tr(r.s.hi[r.i], r.s);
-        if (lo != null && hi != null) txt += " (" + fmtV(lo, dec) + "–" + fmtV(hi, dec) + ")";
+        if (lo != null && hi != null) txt += " (" + fmtShown(lo, dec) + "–" + fmtShown(hi, dec) + ")";
       }
       return vgrD3.tooltipRow(spec.has_groups ? r.gr.label : (T.y_axis_title || "Värde"), txt, r.gr.base_color) +
         extraRows(r, indent);

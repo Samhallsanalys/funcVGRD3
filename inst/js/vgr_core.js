@@ -248,7 +248,9 @@
         if (lines.length === 1) { t.text(lines[0]); return; }
         lines.forEach(function (line, i) {
           t.append("tspan").attr("x", 0)
-            .attr("dy", i === 0 ? (-(lines.length - 1) * 0.6 + "em") : "1.2em")   // text-elementet har redan dy 0.35em
+            // Första radens dy ersätter text-elementets dy 0.35em, så den tas med här (förut saknades den och
+            // etiketter med flera rader hamnade 0,35 em för högt)
+            .attr("dy", i === 0 ? (0.35 - (lines.length - 1) * 0.6 + "em") : "1.2em")
             .text(line);
         });
       });

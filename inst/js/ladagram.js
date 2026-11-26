@@ -291,13 +291,14 @@
       function gridOn(setting, valueAxis) { return setting === true || setting === ((valueAxis === HOR) ? "x" : "y"); }
       var tv = vt.map(function (t) { return t.v; });
       var mids = []; for (var mi = 1; mi < tv.length; mi++) mids.push((tv[mi - 1] + tv[mi]) / 2);
-      if (gridOn(spec.grid.minor, true)) valLine(grid.selectAll(null).data(mids).enter().append("line")).attr("stroke", "#f2f2f2").attr("stroke-width", 0.71);
-      if (gridOn(spec.grid.major, true)) valLine(grid.selectAll(null).data(tv).enter().append("line")).attr("stroke", "#e5e5e5").attr("stroke-width", 1.42);
+      var GR = spec.grid;   // färg och tjocklek: grid_* (px)
+      if (gridOn(GR.minor, true)) valLine(grid.selectAll(null).data(mids).enter().append("line")).attr("stroke", GR.minor_color).attr("stroke-width", GR.minor_width);
+      if (gridOn(GR.major, true)) valLine(grid.selectAll(null).data(tv).enter().append("line")).attr("stroke", GR.major_color).attr("stroke-width", GR.major_width);
       if (spec.has_categories && gridOn(spec.grid.major, false)) {
         grid.selectAll(null).data(cats).enter().append("line").each(function (c) {
           var a = P(band(c) + step / 2, valDom[0]), z = P(band(c) + step / 2, valDom[1]);
           d3.select(this).attr("x1", a[0]).attr("y1", a[1]).attr("x2", z[0]).attr("y2", z[1]);
-        }).attr("stroke", "#e5e5e5").attr("stroke-width", 1.42);
+        }).attr("stroke", GR.major_color).attr("stroke-width", GR.major_width);
       }
       if (hasFacets) {
         g.append("rect").attr("x", rect.x0).attr("y", rect.y0).attr("width", rect.x1 - rect.x0)

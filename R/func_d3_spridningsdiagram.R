@@ -236,6 +236,13 @@ func_d3_spridningsdiagram <- function(
   # === D3: SIZE ===
   width = 1400,
   height = 800,
+
+  # --- Tillagda i 0.15.0 (sist, så att positionella anrop inte flyttas) ---
+  # === D3: GRID LINES ===
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
   .rendera = FALSE
 ) {
 
@@ -497,7 +504,7 @@ func_d3_spridningsdiagram_bygg <- function(p) {
                   color = if (p$data_label_color == "auto") "auto" else func_d3_farg(p$data_label_color),
                   repel = p$data_label_repel, max_overlaps = if (is.finite(p$data_label_max_overlaps)) p$data_label_max_overlaps else NULL,
                   box = p$data_label_box, box_color = func_d3_farg(p$data_label_box_color), box_alpha = p$data_label_box_alpha),
-    grid = list(major = p$show_major_grid, minor = p$show_minor_grid),
+    grid = func_d3_stodlinjer(p),   # major/minor, färg och tjocklek
     axis_line = list(x = p$x_axis_line, y = p$y_axis_line),
     tooltip = list(show = p$tooltip_show, unit = p$tooltip_unit %||% "",
                    x_title = p$x_axis_title %||% x_value, y_title = p$y_axis_title %||% y_value,

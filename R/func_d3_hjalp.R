@@ -4,6 +4,7 @@
   func_d3_karta_change   = "Förändringskarta (func_graf_karta_change)",
   func_d3_karta_heatmap  = "Täthetskarta för punkter (func_graf_karta_heatmap)",
   func_d3_linjediagram   = "Linjediagram (func_graf_linjediagram) — index/förändring, prognos, zoom",
+  func_d3_ytdiagram      = "Ytdiagram — staplade ytor eller 100 %, samma argument som linjediagrammet",
   func_d3_stapeldiagram  = "Stapeldiagram (func_graf_barchart) — grupperad/staplad/100 %, sortering",
   func_d3_barchart       = "Samma som func_d3_stapeldiagram, under originalets namn",
   func_d3_dumbbell       = "Hanteldiagram (func_graf_dumbbell) — två perioder per kategori",

@@ -234,6 +234,58 @@
 #' @param width Diagrammets bredd i pixlar. Diagrammen (utom kartorna)
 #'   krymper för att få plats i fönstret.
 #' @param height Diagrammets höjd i pixlar.
+#' @param data_label_column Kolumn med etikettexten, som text. Texten visas som den är,
+#'   och `\n` ger en ny rad, t.ex. `"2 193 mdr kr\n(90,0 %)"`. Har flera rader samma x och
+#'   grupp används den första texten som inte saknas; saknad text ger ingen etikett.
+#'   Kräver `data_labels = TRUE`. Används inte för summaetiketten på staplade staplar med
+#'   `data_label_position = "outside"`. `NULL` (standard) ger etiketter enligt
+#'   `data_label_format`.
+#' @param data_label_overflow Vad som händer med en etikett utanför stapeln
+#'   (`data_label_position = "outside"`) som inte ryms i panelen: `"expand"` (standard)
+#'   ger stående staplars värdeaxel mer luft, så att etiketter med flera rader också ryms
+#'   (dock inte förbi en angiven `y_axis_max`/`y_axis_min`), och `"inside"` lägger
+#'   etiketten inuti stapelns ände i färgen `data_label_inside_color`, om stapeln är
+#'   längre än etiketten. Gäller inte `data_label_repel = TRUE`.
+#' @param data_label_inside_color Textfärg för etiketter som `data_label_overflow =
+#'   "inside"` har lagt inuti stapeln. Med `data_label_box = TRUE` behålls
+#'   `data_label_color`.
+#' @param x_axis_text_wrap Radbryt kategoriaxelns text efter så här många tecken. `\n` i
+#'   ett kategorinamn ger alltid en ny rad. Utrymmet under (eller till vänster om)
+#'   panelen räknas efter antalet rader. `NULL` (standard) ger ingen radbrytning.
+#' @param x_axis_breaks Värdena för skalstrecken på en tal- eller datumaxel, t.ex.
+#'   `seq(2000, 2024, 2)` eller en vektor med datum. Går före `x_axis_n_breaks` och
+#'   `x_date_breaks`. `NULL` (standard) väljs automatiskt.
+#' @param x_axis_n_breaks Önskat antal skalstreck på en numerisk x-axel (typiskt 4–10).
+#'   `NULL` (standard) ger 5.
+#' @param x_axis_minor_breaks Värdena för de mindre stödlinjerna på en tal- eller
+#'   datumaxel, t.ex. `2000:2024` (en per år). Går före `x_date_minor_breaks` och syns
+#'   med `show_minor_grid`. `NULL` (standard) ger inga på en numerisk axel.
+#' @param y_axis_expand Luft på värdeaxeln utanför data och `y_axis_min`/`y_axis_max`,
+#'   som andel av spannet: `c(nedre, övre)`, som `ggplot2::expansion(mult = ...)`. Med
+#'   `y_axis_max = 100` och `y_axis_expand = c(0, 0)` slutar axeln vid 100. Anges den
+#'   får liggande staplars etiketter ingen extra luft. `NULL` (standard) ger 5 % nedtill
+#'   och 15 % upptill (20 % med etiketter, 10 och 25 % i paneler med etiketter, mer för
+#'   långa etiketter på liggande staplar).
+#' @param y_axis_format Värdeaxelns format: `"number"` (standard) eller `"percent"` för
+#'   andelar mellan 0 och 1, som visas som procent ("82 %") på axeln, i tooltipen och i
+#'   etiketterna. `y_axis_min`, `y_axis_max`, `y_axis_breaks` och `y_break_line` anges
+#'   då som andelar.
+#' @param grid_major_color Färg på de större stödlinjerna.
+#' @param grid_minor_color Färg på de mindre stödlinjerna.
+#' @param grid_major_width Tjocklek på de större stödlinjerna (ggplot2:s `linewidth`).
+#' @param grid_minor_width Tjocklek på de mindre stödlinjerna (ggplot2:s `linewidth`).
+#' @param tooltip_x_format Hur x-värdet skrivs som rubrik i tooltipen: ett datumformat
+#'   (strftime) för en datumaxel, t.ex. `"%Y"`, eller en funktion som tar x-värdena och
+#'   returnerar text, t.ex. `function(x) paste(x, "år")`. `NULL` (standard) ger
+#'   `as.character()` av x-värdet.
+#' @param reverse_categories `TRUE` vänder kategoriernas ordning på axeln. Liggande
+#'   staplar ritas annars nerifrån, så att den första kategorin (efter faktornivåer eller
+#'   sortering) hamnar längst ned; med `TRUE` hamnar den överst, som i en tabell. På
+#'   stående staplar hamnar den första kategorin längst till höger. Gäller även
+#'   sorteringsmenyn, och bara kategorier (text eller faktor), inte tal- och datumaxlar.
+#' @param legend_reverse `TRUE` visar förklaringen i omvänd ordning. Staplade staplar
+#'   staplas i omvänd gruppordning (den första gruppen längst ut), så med `TRUE` står
+#'   grupperna i förklaringen i samma ordning som de läses i en liggande stapel.
 #' @param .rendera Intern. `TRUE` bygger diagrammet och används när objektet skrivs ut.
 #'   Ändra inte.
 #'
@@ -415,6 +467,31 @@ func_d3_stapeldiagram <- function(
   # === D3: SIZE ===
   width = 1400,
   height = 800,
+
+  # --- Tillagda i 0.15.0 (sist, så att positionella anrop inte flyttas) ---
+  # === D3: DATA LABELS ===
+  data_label_column = NULL,
+  data_label_overflow = "expand",
+  data_label_inside_color = "white",
+
+  # === D3: AXES ===
+  x_axis_text_wrap = NULL,
+  x_axis_breaks = NULL,
+  x_axis_n_breaks = NULL,
+  x_axis_minor_breaks = NULL,
+  y_axis_expand = NULL,
+  y_axis_format = "number",
+  reverse_categories = FALSE,
+
+  # === D3: GRID LINES ===
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
+
+  # === D3: TOOLTIP AND LEGEND ===
+  tooltip_x_format = NULL,
+  legend_reverse = FALSE,
   .rendera = FALSE
 ) {
 
@@ -473,9 +550,12 @@ func_d3_stapeldiagram_bygg <- function(p) {
   if (!is.character(x_value) && length(x_value) > 1) { df_work$.tmp_x <- x_value; x_value <- ".tmp_x" }
   if (!is.character(y_value) && length(y_value) > 1) { df_work$.tmp_y <- y_value; y_value <- ".tmp_y" }
 
-  missing_cols <- setdiff(c(x_value, y_value, group, facet_var, filt, p$reference_column), names(df_work))
+  missing_cols <- setdiff(c(x_value, y_value, group, facet_var, filt, p$reference_column, p$data_label_column), names(df_work))
   if (length(missing_cols) > 0) stop("Missing columns in data: ", paste(missing_cols, collapse = ", "))
   if (!is.numeric(df_work[[y_value]])) stop("func_d3_stapeldiagram: y_value ('", y_value, "') måste vara numerisk.")
+  func_d3_kontrollera_yaxel(p)
+  if (!identical(p$data_label_overflow, "expand") && !identical(p$data_label_overflow, "inside"))
+    stop("data_label_overflow must be \"expand\" or \"inside\"")
   if (!p$bar_type %in% c("grouped", "stacked", "filled")) stop("bar_type must be one of: grouped, stacked, filled")
   if (!p$legend_position %in% c("none", "top", "bottom", "left", "right"))
     stop("legend_position must be one of: right, left, top, bottom, none")
@@ -621,13 +701,30 @@ func_d3_stapeldiagram_bygg <- function(p) {
         mbrk <- scales::breaks_width(p$x_date_minor_breaks)(as.Date(xr))
         x_minor <- as.list(enc_x(mbrk[enc_x(mbrk) >= x_domain[1] & enc_x(mbrk) <= x_domain[2]]))
       }
+      # Egna skalstreck och mindre stödlinjer (x_axis_breaks/x_axis_minor_breaks) går före x_date_*
+      if (!is.null(p$x_axis_breaks)) {
+        brk <- sort(as.Date(p$x_axis_breaks))
+        brk <- brk[enc_x(brk) >= x_domain[1] & enc_x(brk) <= x_domain[2]]
+        x_ticks <- as.list(enc_x(brk)); x_tick_labels <- as.list(format(brk, x_date_format))
+      }
+      if (!is.null(p$x_axis_minor_breaks)) {
+        mbrk <- as.Date(p$x_axis_minor_breaks)
+        x_minor <- as.list(enc_x(mbrk[enc_x(mbrk) >= x_domain[1] & enc_x(mbrk) <= x_domain[2]]))
+      }
       if (x_angle == 0 && nchar(x_date_format) > 4) x_angle <- 45
     } else {
-      brk <- scales::extended_breaks()(xr)
+      brk <- if (!is.null(p$x_axis_breaks)) sort(as.numeric(p$x_axis_breaks))
+             else scales::extended_breaks(n = p$x_axis_n_breaks %||% 5)(xr)
+      # "whole" skriver as.integer(x): brutna värden (2002,5) skulle få fel årtal, som i linjediagrammet
+      if (p$x_number_format == "whole") brk <- brk[brk == round(brk)]
       brk <- brk[brk >= x_domain[1] & brk <= x_domain[2]]
       x_ticks <- as.list(brk)
       x_tick_labels <- as.list(if (p$x_number_format == "whole") as.character(as.integer(brk))
                                else scales::label_number(big.mark = " ", decimal.mark = ",")(brk))
+      if (!is.null(p$x_axis_minor_breaks)) {
+        mbrk <- as.numeric(p$x_axis_minor_breaks)
+        x_minor <- as.list(mbrk[mbrk >= x_domain[1] & mbrk <= x_domain[2]])
+      }
     }
   }
   if (x_typ == "discrete" && x_angle == 0 && length(x_levels) > 8 && !p$horizontal) x_angle <- 45
@@ -642,6 +739,16 @@ func_d3_stapeldiagram_bygg <- function(p) {
   tt_kol <- func_d3_tooltip_kolumner(df_work, p$tooltip_columns, p$tooltip_decimals, p$data_label_decimals)
   tt_namn <- tt_kol$namn
   df_work[tt_namn] <- tt_kol$values
+  # tooltip_x_format: egen rubrik i tooltipen (.xt behålls, den används för markering och "x_y"-etiketter)
+  har_xl <- !is.null(p$tooltip_x_format)
+  if (har_xl) df_work$.xl <- func_d3_x_tooltip(df_work[[x_value]], p$tooltip_x_format)
+  # data_label_column: etiketten som den är (tom text = ingen etikett)
+  har_lt <- !is.null(p$data_label_column)
+  if (har_lt) {
+    lt <- as.character(df_work[[p$data_label_column]])
+    lt[!is.na(lt) & !nzchar(lt)] <- NA_character_
+    df_work$.lt <- lt
+  }
   df_rows <- df_work[!is.na(df_work$.x), , drop = FALSE]
   # En stapel per filter/facett/x/grupp. Flera rader med samma kombination summeras (geom_col staplar
   # dem på varandra i ggplot2, så totalen blir densamma).
@@ -651,12 +758,15 @@ func_d3_stapeldiagram_bygg <- function(p) {
   df_rows <- df_rows %>% group_by(.k, .f, .x, .g) %>%
     summarise(.v = summa(.data[[y_value]]), .o = min(.o), .xt = as.character(first(.data[[x_value]])),
               .ref = if (!is.null(p$reference_column)) first(.data[[p$reference_column]]) else NA,
+              .xl = if (har_xl) first(.xl) else NA, .lt = if (har_lt) func_d3_forsta_varde(.lt) else NA,
               across(all_of(tt_namn), func_d3_forsta_varde), .groups = "drop") %>%
     arrange(.o)
   rader <- lapply(seq_len(nrow(df_rows)), function(i) {
     r <- list(k = df_rows$.k[i], f = df_rows$.f[i], x = df_rows$.x[i], g = df_rows$.g[i],
               v = df_rows$.v[i], o = df_rows$.o[i], xt = df_rows$.xt[i],
               ref = if (!is.null(p$reference_column)) df_rows$.ref[i] else NULL)
+    if (har_xl) r$xl <- df_rows$.xl[i]
+    if (har_lt) r$lt <- df_rows$.lt[i]   # NA -> null (ingen etikett)
     if (length(tt_namn)) r$tt <- lapply(tt_namn, function(n) df_rows[[n]][i])   # NA -> null (visas inte)
     r
   })
@@ -750,18 +860,24 @@ func_d3_stapeldiagram_bygg <- function(p) {
   if (p$data_labels && p$data_label_position == "outside" && any(df_work[[y_value]] < 0, na.rm = TRUE)) {
     expansion_mult[1] <- expansion_mult[2]
   }
+  # y_axis_expand ersätter standardluften (liggande staplars etikettutrymme nedan kan fortfarande öka den)
+  if (!is.null(p$y_axis_expand)) expansion_mult <- as.numeric(p$y_axis_expand)
   # Liggande staplar: utrymmet växer med den visade etikettens längd och textstorlek (samma uppskattning som originalet:
   # summor vid staplat "outside", x100 och "%" vid procent, gruppnamn/x-värde som prefix, ~200 pt bred panel)
-  if (isTRUE(p$horizontal) && p$data_labels && p$data_label_position == "outside") {
+  # Inte när y_axis_expand anges (luften är då användarens) eller med data_label_overflow = "inside"
+  if (isTRUE(p$horizontal) && p$data_labels && p$data_label_position == "outside" &&
+      is.null(p$y_axis_expand) && p$data_label_overflow != "inside") {
     shows_totals <- p$bar_type %in% c("stacked", "filled") && !is.null(group)
     shown <- if (shows_totals) {
       df_work %>% group_by(.k, .f, .x) %>% summarise(v = sum(.data[[y_value]], na.rm = TRUE), .groups = "drop") %>% pull(v)
     } else df_work[[y_value]]
-    if (p$data_label_format == "percentage") shown <- 100 * shown
+    # Procentetiketter: data_label_format = "percentage" ("12,3%") eller y_axis_format = "percent" ("12,3 %")
+    procent_lab <- p$data_label_format == "percentage" || (p$y_axis_format == "percent" && p$data_label_format == "number")
+    if (procent_lab) shown <- 100 * shown
     num_char <- max(nchar(format(round(abs(shown), p$data_label_decimals),
                                  nsmall = p$data_label_decimals, big.mark = " ", scientific = FALSE, trim = TRUE)),
                     na.rm = TRUE) + 1 +
-                (if (p$data_label_format == "percentage") 1 else 0)
+                (if (p$data_label_format == "percentage") 1 else if (procent_lab) 2 else 0)
     prefix_char <- (if (p$data_label_format == "x_y") max(nchar(as.character(df_work[[x_value]])), na.rm = TRUE) +
                       nchar(p$data_label_group_separator) else 0) +
                    (if (!is.null(group) && p$data_label_show_group && !shows_totals)
@@ -769,6 +885,9 @@ func_d3_stapeldiagram_bygg <- function(p) {
     n_char <- num_char + prefix_char
     # Textetiketter radbryts vid data_label_width — men själva talet bryts aldrig (hårt mellanslag)
     if (!is.null(p$data_label_width) && prefix_char > 0) n_char <- max(min(n_char, p$data_label_width), num_char)
+    # data_label_column: den längsta raden i texten (summaetiketterna på staplade staplar är fortfarande tal)
+    if (har_lt && !shows_totals && any(!is.na(df_work$.lt)))
+      n_char <- max(nchar(unlist(strsplit(stats::na.omit(df_work$.lt), "\n", fixed = TRUE))), 1)
     need <- n_char * p$data_label_size * ggplot2::.pt * 0.65 / 200 + 0.03   # 0.65 em: Verdana är bred (samma ~200 pt som originalet)
     if (any(df_work[[y_value]] >= 0, na.rm = TRUE)) expansion_mult[2] <- max(expansion_mult[2], need)
     if (any(df_work[[y_value]] < 0,  na.rm = TRUE)) expansion_mult[1] <- max(expansion_mult[1], need)
@@ -796,15 +915,22 @@ func_d3_stapeldiagram_bygg <- function(p) {
                 facet_title_size = func_d3_pt_till_px(p$facet_title_size)),
     x = list(type = x_typ, levels = as.list(x_levels), domain = x_domain, ticks = x_ticks, tick_labels = x_tick_labels,
              minor = x_minor,
-             angle = x_angle, number_format = p$x_number_format),
+             angle = x_angle, number_format = p$x_number_format,
+             # Kategoriaxelns text med radbrytningar (x_axis_text_wrap, "\n"), parallell med levels; bara när den skiljer sig
+             level_labels = if (x_typ == "discrete") {
+               ll <- func_d3_radbryt(x_levels, p$x_axis_text_wrap)
+               if (!identical(ll, as.character(x_levels))) as.list(ll)
+             },
+             reverse = isTRUE(p$reverse_categories) && x_typ == "discrete"),
     y = list(min = p$y_axis_min, max = p$y_axis_max, breaks = if (!is.null(p$y_axis_breaks)) as.list(p$y_axis_breaks) else NULL,
              n_breaks = p$y_axis_n_breaks %||% (if (!is.null(facet_var)) 4 else 6), auto = p$y_axis_auto_breaks,
-             expand = expansion_mult),
+             expand = expansion_mult, format = p$y_axis_format),
     facets = list(levels = as.list(facet_levels), ncol = ncol_val, scales = p$facet_scales,
                   wrapped = !is.null(facet_var) && any(grepl("\n", facet_levels))),
     groups = grupper, has_groups = !is.null(group),
     legend = list(position = p$legend_position, title = if (!is.null(group)) (p$legend_title %||% group) else NULL,
-                  text_size = func_d3_pt_till_px(p$legend_text_size), title_size = func_d3_pt_till_px(p$legend_title_size)),
+                  text_size = func_d3_pt_till_px(p$legend_text_size), title_size = func_d3_pt_till_px(p$legend_title_size),
+                  reverse = isTRUE(p$legend_reverse)),
     rows = rader,
     filter = list(enabled = !is.null(filt), label = filt, values = as.list(filter_values), default = filter_default,
                   same_y = p$interactive_filter_same_y),
@@ -815,7 +941,9 @@ func_d3_stapeldiagram_bygg <- function(p) {
                   format = p$data_label_format, decimals = p$data_label_decimals, width = p$data_label_width,
                   nudge_x = p$data_label_nudge_x, nudge_y = p$data_label_nudge_y,
                   repel = p$data_label_repel, force = p$data_label_force, max_overlaps = p$data_label_max_overlaps,
-                  show_group = p$data_label_show_group && !is.null(group), separator = p$data_label_group_separator),
+                  show_group = p$data_label_show_group && !is.null(group), separator = p$data_label_group_separator,
+                  column = har_lt, overflow = p$data_label_overflow,
+                  inside_color = func_d3_farg(p$data_label_inside_color)),
     highlight = list(x = as.list(as.character(p$highlight_x_values %||% character(0))),
                      # Datum-/tal-x: samma värden i JS-kodningen, så axeletiketten kan göras fet
                      x_enc = if (x_typ != "discrete" && length(p$highlight_x_values)) as.list(enc_x(p$highlight_x_values)) else list(),
@@ -824,7 +952,7 @@ func_d3_stapeldiagram_bygg <- function(p) {
     ref = list(y = as.list(p$y_break_line), y_label = as.list(p$y_break_line_label)),   # en etikett per linje
     color_negative = func_d3_farg(p$color_negative),
     text_scale = p$text_scale,   # för D3-egna etiketter (referenslinjer)
-    grid = list(major = p$show_major_grid, minor = p$show_minor_grid),   # TRUE/FALSE/"x"/"y" (visade axlar)
+    grid = func_d3_stodlinjer(p),   # major/minor: TRUE/FALSE/"x"/"y" (visade axlar), färg och tjocklek
     axis_line = list(x = p$x_axis_line, y = p$y_axis_line),
     bar_line = list(color = if (is.null(p$bar_line_color)) NULL else func_d3_farg(p$bar_line_color),
                     width = p$bar_line_width * 72.27 / 25.4),   # ggplot linewidth -> px

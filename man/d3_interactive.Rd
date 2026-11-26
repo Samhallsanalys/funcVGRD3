@@ -22,7 +22,7 @@ zoom, sökruta, klickbar förklaring, knappar och rullistor med uppspelning.
 Argument och var de finns (vad parametrarna gör står på diagramfunktionernas
 hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    Argument \tab Parameter \tab Finns i \cr
-   \code{zoom} \tab \code{interactive_zoom} \tab koropletkarta, förändringskarta, täthetskarta, linjediagram, spridningsdiagram \cr
+   \code{zoom} \tab \code{interactive_zoom} \tab koropletkarta, förändringskarta, täthetskarta, linjediagram, ytdiagram, spridningsdiagram \cr
    \code{zoom_group_column} \tab \code{interactive_zoom_group_column} \tab koropletkarta, förändringskarta \cr
    \code{search} \tab \code{interactive_search} \tab koropletkarta, förändringskarta, spridningsdiagram \cr
    \code{legend} \tab \code{interactive_legend} \tab alla \cr

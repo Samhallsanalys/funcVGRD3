@@ -20,11 +20,11 @@ Ritar ett diagram per värde i en kolumn (\verb{facet_*}), t.ex. ett per kön.
 Argument och var de finns (vad parametrarna gör står på diagramfunktionernas
 hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    Argument \tab Parameter \tab Finns i \cr
-   \code{var} \tab \code{facet_var} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
-   \code{ncol} \tab \code{facet_ncol} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
-   \code{same_y_scale} \tab \code{facet_same_y_scale} \tab linjediagram, stapeldiagram, hanteldiagram, spridningsdiagram, histogram, lådagram \cr
-   \code{title_size} \tab \code{facet_title_size} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
-   \code{title_wrap} \tab \code{facet_title_wrap} \tab linjediagram, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{var} \tab \code{facet_var} \tab linjediagram, ytdiagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{ncol} \tab \code{facet_ncol} \tab linjediagram, ytdiagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{same_y_scale} \tab \code{facet_same_y_scale} \tab linjediagram, ytdiagram, stapeldiagram, hanteldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{title_size} \tab \code{facet_title_size} \tab linjediagram, ytdiagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
+   \code{title_wrap} \tab \code{facet_title_wrap} \tab linjediagram, ytdiagram, stapeldiagram, cirkeldiagram, spridningsdiagram, histogram, lådagram \cr
    \code{scales} \tab \code{facet_scales} \tab stapeldiagram, spridningsdiagram, histogram, lådagram \cr
 }
 }

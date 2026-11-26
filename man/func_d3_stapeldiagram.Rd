@@ -118,6 +118,22 @@ func_d3_stapeldiagram(
   animation_play_interval = 1500,
   width = 1400,
   height = 800,
+  data_label_column = NULL,
+  data_label_overflow = "expand",
+  data_label_inside_color = "white",
+  x_axis_text_wrap = NULL,
+  x_axis_breaks = NULL,
+  x_axis_n_breaks = NULL,
+  x_axis_minor_breaks = NULL,
+  y_axis_expand = NULL,
+  y_axis_format = "number",
+  reverse_categories = FALSE,
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
+  tooltip_x_format = NULL,
+  legend_reverse = FALSE,
   .rendera = FALSE
 )
 
@@ -234,6 +250,22 @@ func_d3_barchart(
   animation_play_interval = 1500,
   width = 1400,
   height = 800,
+  data_label_column = NULL,
+  data_label_overflow = "expand",
+  data_label_inside_color = "white",
+  x_axis_text_wrap = NULL,
+  x_axis_breaks = NULL,
+  x_axis_n_breaks = NULL,
+  x_axis_minor_breaks = NULL,
+  y_axis_expand = NULL,
+  y_axis_format = "number",
+  reverse_categories = FALSE,
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
+  tooltip_x_format = NULL,
+  legend_reverse = FALSE,
   .rendera = FALSE
 )
 }
@@ -555,6 +587,73 @@ krymper för att få plats i fönstret.}
 
 \item{height}{Diagrammets höjd i pixlar.}
 
+\item{data_label_column}{Kolumn med etikettexten, som text. Texten visas som den är,
+och \verb{\\n} ger en ny rad, t.ex. \code{"2 193 mdr kr\\n(90,0 \%)"}. Har flera rader samma x och
+grupp används den första texten som inte saknas; saknad text ger ingen etikett.
+Kräver \code{data_labels = TRUE}. Används inte för summaetiketten på staplade staplar med
+\code{data_label_position = "outside"}. \code{NULL} (standard) ger etiketter enligt
+\code{data_label_format}.}
+
+\item{data_label_overflow}{Vad som händer med en etikett utanför stapeln
+(\code{data_label_position = "outside"}) som inte ryms i panelen: \code{"expand"} (standard)
+ger stående staplars värdeaxel mer luft, så att etiketter med flera rader också ryms
+(dock inte förbi en angiven \code{y_axis_max}/\code{y_axis_min}), och \code{"inside"} lägger
+etiketten inuti stapelns ände i färgen \code{data_label_inside_color}, om stapeln är
+längre än etiketten. Gäller inte \code{data_label_repel = TRUE}.}
+
+\item{data_label_inside_color}{Textfärg för etiketter som \code{data_label_overflow = "inside"} har lagt inuti stapeln. Med \code{data_label_box = TRUE} behålls
+\code{data_label_color}.}
+
+\item{x_axis_text_wrap}{Radbryt kategoriaxelns text efter så här många tecken. \verb{\\n} i
+ett kategorinamn ger alltid en ny rad. Utrymmet under (eller till vänster om)
+panelen räknas efter antalet rader. \code{NULL} (standard) ger ingen radbrytning.}
+
+\item{x_axis_breaks}{Värdena för skalstrecken på en tal- eller datumaxel, t.ex.
+\code{seq(2000, 2024, 2)} eller en vektor med datum. Går före \code{x_axis_n_breaks} och
+\code{x_date_breaks}. \code{NULL} (standard) väljs automatiskt.}
+
+\item{x_axis_n_breaks}{Önskat antal skalstreck på en numerisk x-axel (typiskt 4–10).
+\code{NULL} (standard) ger 5.}
+
+\item{x_axis_minor_breaks}{Värdena för de mindre stödlinjerna på en tal- eller
+datumaxel, t.ex. \code{2000:2024} (en per år). Går före \code{x_date_minor_breaks} och syns
+med \code{show_minor_grid}. \code{NULL} (standard) ger inga på en numerisk axel.}
+
+\item{y_axis_expand}{Luft på värdeaxeln utanför data och \code{y_axis_min}/\code{y_axis_max},
+som andel av spannet: \code{c(nedre, övre)}, som \code{ggplot2::expansion(mult = ...)}. Med
+\code{y_axis_max = 100} och \code{y_axis_expand = c(0, 0)} slutar axeln vid 100. Anges den
+får liggande staplars etiketter ingen extra luft. \code{NULL} (standard) ger 5 \% nedtill
+och 15 \% upptill (20 \% med etiketter, 10 och 25 \% i paneler med etiketter, mer för
+långa etiketter på liggande staplar).}
+
+\item{y_axis_format}{Värdeaxelns format: \code{"number"} (standard) eller \code{"percent"} för
+andelar mellan 0 och 1, som visas som procent ("82 \%") på axeln, i tooltipen och i
+etiketterna. \code{y_axis_min}, \code{y_axis_max}, \code{y_axis_breaks} och \code{y_break_line} anges
+då som andelar.}
+
+\item{reverse_categories}{\code{TRUE} vänder kategoriernas ordning på axeln. Liggande
+staplar ritas annars nerifrån, så att den första kategorin (efter faktornivåer eller
+sortering) hamnar längst ned; med \code{TRUE} hamnar den överst, som i en tabell. På
+stående staplar hamnar den första kategorin längst till höger. Gäller även
+sorteringsmenyn, och bara kategorier (text eller faktor), inte tal- och datumaxlar.}
+
+\item{grid_major_color}{Färg på de större stödlinjerna.}
+
+\item{grid_minor_color}{Färg på de mindre stödlinjerna.}
+
+\item{grid_major_width}{Tjocklek på de större stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{grid_minor_width}{Tjocklek på de mindre stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{tooltip_x_format}{Hur x-värdet skrivs som rubrik i tooltipen: ett datumformat
+(strftime) för en datumaxel, t.ex. \code{"\%Y"}, eller en funktion som tar x-värdena och
+returnerar text, t.ex. \code{function(x) paste(x, "år")}. \code{NULL} (standard) ger
+\code{as.character()} av x-värdet.}
+
+\item{legend_reverse}{\code{TRUE} visar förklaringen i omvänd ordning. Staplade staplar
+staplas i omvänd gruppordning (den första gruppen längst ut), så med \code{TRUE} står
+grupperna i förklaringen i samma ordning som de läses i en liggande stapel.}
+
 \item{.rendera}{Intern. \code{TRUE} bygger diagrammet och används när objektet skrivs ut.
 Ändra inte.}
 }
@@ -634,10 +733,39 @@ p4 <- func_d3_barchart(syss[syss$ar == 2024, ], x_value = "kommun", y_value = "a
                        group = "kon", bar_type = "stacked", horizontal = TRUE)
 if (interactive()) p4
 
+# Egen etikettext ur en kolumn (två rader med "\n") och radbruten kategoriaxel. Med en fast
+# y_axis_max ryms inte den högsta etiketten ovanför stapeln; data_label_overflow = "inside"
+# lägger den då i vitt inuti stapeln
+ink <- data.frame(typ = c("Lön och företagande", "Pension", "Ersättning för långvarigt nedsatt arbetsförmåga"),
+                  mdr = c(2193, 120, 45))
+ink$etikett <- paste0(ink$mdr, " mdr kr\n(", format(round(100 * ink$mdr / sum(ink$mdr), 1), decimal.mark = ",", trim = TRUE), " \%)")
+p5 <- func_d3_stapeldiagram(ink, x_value = "typ", y_value = "mdr", data_labels = TRUE,
+                            data_label_column = "etikett", data_label_overflow = "inside",
+                            y_axis_max = 2200, y_axis_expand = c(0, 0), x_axis_text_wrap = 20)
+if (interactive()) p5
+
+# Andelar (0–1) som procent, år som tal med skalstreck vartannat år och en tunn
+# stödlinje per år, grå stödlinjer som syns på en projektor och "År 2020" i tooltipen
+andel <- data.frame(ar = 2014:2024, andel = c(.71, .72, .72, .73, .74, .74, .72, .73, .75, .76, .76))
+p6 <- func_d3_stapeldiagram(andel, x_value = "ar", y_value = "andel", y_axis_format = "percent",
+                            x_axis_breaks = seq(2014, 2024, 2), x_axis_minor_breaks = 2014:2024,
+                            show_major_grid = "y", show_minor_grid = "x",
+                            grid_major_color = "#bdbdbd", grid_minor_color = "#d4d4d4",
+                            tooltip_x_format = function(x) paste("År", x))
+if (interactive()) p6
+
+# Liggande staplar med den första kategorin överst och förklaringen i samma ordning som
+# delarna i stapeln läses
+p7 <- func_d3_stapeldiagram(syss[syss$ar == 2024, ], x_value = "kommun", y_value = "antal",
+                            group = "kon", bar_type = "stacked", horizontal = TRUE,
+                            reverse_categories = TRUE, legend_reverse = TRUE)
+if (interactive()) p7
+
 # Spara alla diagram ovan i samma fristående HTML-fil (här i en temporär katalog).
 # Namnen i listan blir rubriker i filen.
 func_d3_spara(list("Stapeldiagram" = p1, "Sorterat med markerad kommun" = p2,
-                   "Per kön med år i rullista" = p3, "Liggande, staplade staplar" = p4),
+                   "Per kön med år i rullista" = p3, "Liggande, staplade staplar" = p4,
+                   "Egen etikettext" = p5, "Andelar och år" = p6, "Första kategorin överst" = p7),
               tempfile(fileext = ".html"))
 }
 \seealso{

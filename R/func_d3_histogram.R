@@ -184,6 +184,13 @@ func_d3_histogram <- function(
   # === D3: SIZE ===
   width = 1400,
   height = 800,
+
+  # --- Tillagda i 0.15.0 (sist, så att positionella anrop inte flyttas) ---
+  # === D3: GRID LINES ===
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
   .rendera = FALSE
 ) {
 
@@ -369,7 +376,7 @@ func_d3_histogram_bygg <- function(p) {
                   text_size = func_d3_pt_till_px(p$legend_text_size), title_size = func_d3_pt_till_px(11 * p$text_scale)),
     labels = list(show = p$data_labels, size = func_d3_mm_till_px(p$data_label_text_size),
                   color = func_d3_farg(p$data_label_color), decimals = p$data_label_decimals),
-    grid = list(major = p$show_major_grid, minor = p$show_minor_grid),
+    grid = func_d3_stodlinjer(p),   # major/minor, färg och tjocklek
     axis_line = list(x = p$x_axis_line, y = p$y_axis_line),
     tooltip = list(show = p$tooltip_show, decimals = p$tooltip_decimals %||% p$data_label_decimals,
                    unit = p$tooltip_unit %||% "", x_title = p$x_axis_title %||% x_value),

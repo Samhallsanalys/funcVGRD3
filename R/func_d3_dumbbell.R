@@ -195,6 +195,40 @@
 #' @param width Diagrammets bredd i pixlar. Diagrammen (utom kartorna)
 #'   krymper för att få plats i fönstret.
 #' @param height Diagrammets höjd i pixlar.
+#' @param subtitle_width Antal tecken innan underrubriken radbryts. Egna radbrytningar
+#'   (`\n`) behålls. `NULL` ger ingen radbrytning (som före version 0.15.0).
+#' @param point_size_column Kolumn med ett tal per kategori och period som styr punktens
+#'   storlek, t.ex. gruppens andel av de sysselsatta, som text. Ytan är proportionell mot
+#'   värdet (som `ggplot2::scale_size_area()`) och den största punkten får storleken
+#'   `point_size`. Värdet visas också i tooltipen. Har flera rader samma kategori och
+#'   period används det första; saknat eller negativt värde ger storleken `point_size`.
+#'   Förklaringen visar inte storlekarna. Skalan skiljer sig från spridningsdiagrammets
+#'   (där `point_size_range` ger minsta och största storlek). `NULL` (standard) ger samma
+#'   storlek för alla.
+#' @param y_break_line Värden på värdeaxeln där en streckad linje dras tvärs över
+#'   diagrammet, t.ex. ett genomsnitt per period, `c(68.1, 75.8)`. `NULL` (standard) ger
+#'   ingen.
+#' @param y_break_line_label Text vid linjerna från `y_break_line`, en per linje
+#'   (återanvänds om de är färre), t.ex. `c("EU 2010", "EU 2025")`. `NULL` (standard) ger
+#'   ingen text.
+#' @param y_break_line_color Linjernas färg, en per linje (återanvänds om de är
+#'   färre), t.ex. samma färger som perioderna.
+#' @param reverse_categories `TRUE` vänder kategoriernas ordning på axeln. Liggande
+#'   hantlar ritas annars nerifrån, så att den första kategorin (efter `sort_axis_by`)
+#'   hamnar längst ned; med `TRUE` hamnar den överst, som i en tabell. Stående hantlar
+#'   får den första kategorin längst till höger. Gäller även sorteringsmenyn.
+#' @param y_axis_format Värdeaxelns format: `"number"` (standard) eller `"percent"` för
+#'   andelar mellan 0 och 1, som visas som procent ("82 %") på axeln, i tooltipen och i
+#'   etiketterna. Förändringen visas då i procentenheter. `y_break_line` anges då
+#'   som andelar.
+#' @param grid_major_color Färg på de större stödlinjerna.
+#' @param grid_minor_color Färg på de mindre stödlinjerna.
+#' @param grid_major_width Tjocklek på de större stödlinjerna (ggplot2:s `linewidth`).
+#' @param grid_minor_width Tjocklek på de mindre stödlinjerna (ggplot2:s `linewidth`).
+#' @param tooltip_unit_change Enhet för förändringen i tooltipen, t.ex.
+#'   `" procentenheter"` när värdena är andelar i procent: skillnaden mellan två andelar
+#'   är procentenheter, inte procent. `NULL` (standard) ger samma enhet som
+#'   `tooltip_unit`, eller " procentenheter" med `y_axis_format = "percent"`.
 #' @param .rendera Intern. `TRUE` bygger diagrammet och används när objektet skrivs ut.
 #'   Ändra inte.
 #'
@@ -361,6 +395,29 @@ func_d3_dumbbell <- function(
   # === D3: SIZE ===
   width = 1400,
   height = 800,
+
+  # --- Tillagda i 0.15.0 (sist, så att positionella anrop inte flyttas) ---
+  # === D3: TEXT ===
+  subtitle_width = 60,
+
+  # === D3: POINTS AND REFERENCE LINES ===
+  point_size_column = NULL,
+  y_break_line = NULL,
+  y_break_line_label = NULL,
+  y_break_line_color = "#000000",
+
+  # === D3: AXES ===
+  reverse_categories = FALSE,
+  y_axis_format = "number",
+
+  # === D3: GRID LINES ===
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.3,
+
+  # === D3: TOOLTIP ===
+  tooltip_unit_change = NULL,
   .rendera = FALSE
 ) {
 
@@ -395,10 +452,13 @@ func_d3_dumbbell_bygg <- function(p) {
 
   # --- Validering (samma som func_graf_dumbbell) ---
   if (nrow(df) == 0) stop("'df' must be a non-empty data.frame")
-  missing_cols <- setdiff(c(x_value, y_value, group, facet_var), names(df))
+  missing_cols <- setdiff(c(x_value, y_value, group, facet_var, p$point_size_column), names(df))
   if (length(missing_cols) > 0) stop(paste("Missing columns:", paste(missing_cols, collapse = ", ")))
   if (length(table(df[[group]])) < 2) stop("At least 2 groups required")
   if (!is.numeric(df[[y_value]])) stop(paste("Column", y_value, "must be numeric"))
+  if (!is.null(p$point_size_column) && !is.numeric(df[[p$point_size_column]]))
+    stop(paste("Column", p$point_size_column, "(point_size_column) must be numeric"))
+  func_d3_kontrollera_yaxel(p)
   if (!p$legend_position %in% c("none", "top", "bottom", "left", "right"))
     stop("legend_position must be one of: right, left, top, bottom, none")
   grid_ok <- function(v) isTRUE(v) || isFALSE(v) || identical(v, "x") || identical(v, "y")
@@ -449,7 +509,11 @@ func_d3_dumbbell_bygg <- function(p) {
   # --- Extra tooltipkolumner: värdet för start- och slutperioden (första raden per kategori och period) ---
   # Decimalerna avgörs på de två perioderna som visas (en ignorerad tredje period påverkar inte)
   df_tt <- df[!is.na(df[[group]]) & as.character(df[[group]]) %in% group_values, , drop = FALSE]
-  tt_kol <- func_d3_tooltip_kolumner(df_tt, p$tooltip_columns, p$tooltip_decimals, 1)
+  # point_size_column visas också i tooltipen (om den inte redan finns bland tooltip_columns)
+  tt_kolumner <- p$tooltip_columns
+  if (!is.null(p$point_size_column) && !p$point_size_column %in% tt_kolumner)
+    tt_kolumner <- c(tt_kolumner, stats::setNames(p$point_size_column, p$point_size_column))
+  tt_kol <- func_d3_tooltip_kolumner(df_tt, tt_kolumner, p$tooltip_decimals, 1)
   tt_namn <- tt_kol$namn
   tt_rad <- NULL
   if (length(tt_namn)) {
@@ -466,6 +530,28 @@ func_d3_dumbbell_bygg <- function(p) {
     tt_rad <- lapply(seq_len(nrow(wide)), function(i) {
       lapply(tt_namn, function(n) list(som_json(s[[n]][i]), som_json(e[[n]][i])))   # [start, slut] per kolumn
     })
+  }
+
+  # --- Punktstorlek efter en kolumn (point_size_column): ytan proportionell mot värdet, som scale_size_area(),
+  # den största punkten får point_size. Första värdet per kategori och period; saknat/negativt = point_size ---
+  storlek_rad <- NULL
+  if (!is.null(p$point_size_column)) {
+    sk <- p$point_size_column
+    # (df_tt är redan summerad om tooltip_columns finns, så raderna tas från df)
+    ps <- df[!is.na(df[[group]]) & as.character(df[[group]]) %in% group_values, , drop = FALSE] %>%
+      mutate(.grupp = as.character(.data[[group]])) %>%
+      group_by(across(all_of(c(nyckel, ".grupp")))) %>%
+      summarise(.s = { v <- .data[[sk]][!is.na(.data[[sk]])]; if (length(v)) v[1] else NA_real_ }, .groups = "drop")
+    period_s <- function(period) {
+      (wide %>% select(all_of(nyckel)) %>% left_join(ps %>% filter(.grupp == period) %>% select(-.grupp), by = nyckel))$.s
+    }
+    s_start <- period_s(group_values[1]); s_slut <- period_s(group_values[2])
+    s_max <- suppressWarnings(max(c(s_start, s_slut)[c(s_start, s_slut) > 0], na.rm = TRUE))
+    radie <- function(s) {
+      if (is.na(s) || s < 0 || !is.finite(s_max)) return(func_d3_punkt_px(p$point_size))
+      func_d3_punkt_px(p$point_size * sqrt(s / s_max))
+    }
+    storlek_rad <- lapply(seq_len(nrow(wide)), function(i) list(radie(s_start[i]), radie(s_slut[i])))
   }
 
   highlight_clean <- trimws(as.character(p$highlight_x_values %||% character(0)))
@@ -518,6 +604,7 @@ func_d3_dumbbell_bygg <- function(p) {
     r <- list(x = wide$.x[i], f = wide$.f[i], start = wide$start_value[i], end = wide$end_value[i],
          change = wide$change[i], hl = wide$is_highlighted[i], o = i)
     if (!is.null(tt_rad)) r$tt <- tt_rad[[i]]
+    if (!is.null(storlek_rad)) r$size <- storlek_rad[[i]]   # [start, slut] punktradie i px
     r
   })
 
@@ -534,7 +621,9 @@ func_d3_dumbbell_bygg <- function(p) {
     width = p$width, height = p$height, font = func_d3_typsnitt(p$font),
     horizontal = p$dumbbell_horizontal,
     text = list(title = if (!is.null(p$title) && nchar(p$title) > p$title_width) func_d3_rader(p$title, p$title_width) else func_d3_rader(p$title),
-                subtitle = func_d3_rader(p$subtitle), caption = func_d3_rader(p$caption),
+                # subtitle_width radbryter varje rad för sig, så att egna "\n" behålls
+                subtitle = func_d3_rader(if (!is.null(p$subtitle)) func_d3_radbryt(paste(p$subtitle, collapse = "\n"), p$subtitle_width)),
+                caption = func_d3_rader(p$caption),
                 title_size = func_d3_pt_till_px(p$title_size),
                 subtitle_size = func_d3_pt_till_px(p$subtitle_text_size),
                 caption_size = func_d3_pt_till_px(p$caption_size),
@@ -574,12 +663,18 @@ func_d3_dumbbell_bygg <- function(p) {
                   axis_padding = p$data_label_axis_padding, clip_off = p$x_axis_clip_off,
                   glow = p$data_label_glow, glow_color = func_d3_farg(p$data_label_glow_color),
                   glow_width = p$data_label_glow_sigma + p$data_label_glow_expand),
-    grid = list(major = p$show_major_grid, minor = p$show_minor_grid),   # TRUE/FALSE/"x"/"y"
+    grid = func_d3_stodlinjer(p),   # major/minor: TRUE/FALSE/"x"/"y", färg och tjocklek
     axis_line = list(x = p$x_axis_line, y = p$y_axis_line),
     text_scale = p$text_scale,
+    reverse = isTRUE(p$reverse_categories),
+    value_format = p$y_axis_format,
+    # y_break_line: en etikett och färg per linje (återanvänds om de är färre)
+    value_ref = list(v = as.list(p$y_break_line[!is.na(p$y_break_line)]), label = as.list(p$y_break_line_label),
+                     color = as.list(func_d3_farg(p$y_break_line_color))),
     tooltip = list(show = p$tooltip_show,
                    decimals = func_d3_tooltip_decimaler(p$tooltip_decimals, c(wide$start_value, wide$end_value), 1),
                    unit = p$tooltip_unit %||% "", set_decimals = p$tooltip_decimals,
+                   unit_change = p$tooltip_unit_change %||% (if (p$y_axis_format == "percent") " procentenheter" else (p$tooltip_unit %||% "")),
                    percent = p$tooltip_change_percent, columns = tt_kol$labels),
     interactive = list(sort = p$interactive_sort, legend = p$interactive_legend, export = p$interactive_export),
     animation = list(draw = p$animation_draw, duration = p$animation_duration)

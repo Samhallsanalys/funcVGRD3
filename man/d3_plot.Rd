@@ -23,8 +23,8 @@ som ggplot2. \code{d3_plot()} tar emot data, ett diagramtypslager väljer diagra
 }
 \details{
 Diagramtypen väljs med \code{\link[=d3_map]{d3_map()}}, \code{\link[=d3_map_change]{d3_map_change()}}, \code{\link[=d3_heatmap]{d3_heatmap()}}, \code{\link[=d3_line]{d3_line()}},
-\code{\link[=d3_bar]{d3_bar()}}, \code{\link[=d3_dumbbell]{d3_dumbbell()}}, \code{\link[=d3_pie]{d3_pie()}}, \code{\link[=d3_scatter]{d3_scatter()}}, \code{\link[=d3_histogram]{d3_histogram()}} eller
-\code{\link[=d3_boxplot]{d3_boxplot()}}.
+\code{\link[=d3_area]{d3_area()}}, \code{\link[=d3_bar]{d3_bar()}}, \code{\link[=d3_dumbbell]{d3_dumbbell()}}, \code{\link[=d3_pie]{d3_pie()}}, \code{\link[=d3_scatter]{d3_scatter()}},
+\code{\link[=d3_histogram]{d3_histogram()}} eller \code{\link[=d3_boxplot]{d3_boxplot()}}.
 Inställningar läggs till med lager som
 tar fullständiga parameternamn (\code{\link[=d3_labs]{d3_labs()}}, \code{\link[=d3_theme]{d3_theme()}}, \code{\link[=d3_colors]{d3_colors()}},
 \code{\link[=d3_params]{d3_params()}}, \code{\link[=d3_size]{d3_size()}}), lager för en parameterfamilj (\code{\link[=d3_labels]{d3_labels()}},

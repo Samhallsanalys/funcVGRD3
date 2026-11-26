@@ -106,6 +106,18 @@ func_d3_dumbbell(
   animation_duration = 900,
   width = 1400,
   height = 800,
+  subtitle_width = 60,
+  point_size_column = NULL,
+  y_break_line = NULL,
+  y_break_line_label = NULL,
+  y_break_line_color = "#000000",
+  reverse_categories = FALSE,
+  y_axis_format = "number",
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.3,
+  tooltip_unit_change = NULL,
   .rendera = FALSE
 )
 }
@@ -383,6 +395,52 @@ krymper för att få plats i fönstret.}
 
 \item{height}{Diagrammets höjd i pixlar.}
 
+\item{subtitle_width}{Antal tecken innan underrubriken radbryts. Egna radbrytningar
+(\verb{\\n}) behålls. \code{NULL} ger ingen radbrytning (som före version 0.15.0).}
+
+\item{point_size_column}{Kolumn med ett tal per kategori och period som styr punktens
+storlek, t.ex. gruppens andel av de sysselsatta, som text. Ytan är proportionell mot
+värdet (som \code{ggplot2::scale_size_area()}) och den största punkten får storleken
+\code{point_size}. Värdet visas också i tooltipen. Har flera rader samma kategori och
+period används det första; saknat eller negativt värde ger storleken \code{point_size}.
+Förklaringen visar inte storlekarna. Skalan skiljer sig från spridningsdiagrammets
+(där \code{point_size_range} ger minsta och största storlek). \code{NULL} (standard) ger samma
+storlek för alla.}
+
+\item{y_break_line}{Värden på värdeaxeln där en streckad linje dras tvärs över
+diagrammet, t.ex. ett genomsnitt per period, \code{c(68.1, 75.8)}. \code{NULL} (standard) ger
+ingen.}
+
+\item{y_break_line_label}{Text vid linjerna från \code{y_break_line}, en per linje
+(återanvänds om de är färre), t.ex. \code{c("EU 2010", "EU 2025")}. \code{NULL} (standard) ger
+ingen text.}
+
+\item{y_break_line_color}{Linjernas färg, en per linje (återanvänds om de är
+färre), t.ex. samma färger som perioderna.}
+
+\item{reverse_categories}{\code{TRUE} vänder kategoriernas ordning på axeln. Liggande
+hantlar ritas annars nerifrån, så att den första kategorin (efter \code{sort_axis_by})
+hamnar längst ned; med \code{TRUE} hamnar den överst, som i en tabell. Stående hantlar
+får den första kategorin längst till höger. Gäller även sorteringsmenyn.}
+
+\item{y_axis_format}{Värdeaxelns format: \code{"number"} (standard) eller \code{"percent"} för
+andelar mellan 0 och 1, som visas som procent ("82 \%") på axeln, i tooltipen och i
+etiketterna. Förändringen visas då i procentenheter. \code{y_break_line} anges då
+som andelar.}
+
+\item{grid_major_color}{Färg på de större stödlinjerna.}
+
+\item{grid_minor_color}{Färg på de mindre stödlinjerna.}
+
+\item{grid_major_width}{Tjocklek på de större stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{grid_minor_width}{Tjocklek på de mindre stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{tooltip_unit_change}{Enhet för förändringen i tooltipen, t.ex.
+\code{" procentenheter"} när värdena är andelar i procent: skillnaden mellan två andelar
+är procentenheter, inte procent. \code{NULL} (standard) ger samma enhet som
+\code{tooltip_unit}, eller " procentenheter" med \code{y_axis_format = "percent"}.}
+
 \item{.rendera}{Intern. \code{TRUE} bygger diagrammet och används när objektet skrivs ut.
 Ändra inte.}
 }
@@ -455,10 +513,23 @@ p4 <- func_d3_dumbbell(arbl, x_value = "kommun", y_value = "andel", group = "ar"
                        title = "Arbetslöshet 2019 och 2024")
 if (interactive()) p4
 
+# Andelar (0–1) som procent med förändringen i procentenheter, punktens storlek efter
+# antalet arbetslösa, streckade linjer för ett snitt per år, kommunerna i dataordning med
+# den första överst och en underrubrik som radbryts efter 50 tecken
+arbl$kvot <- arbl$andel / 100
+p5 <- func_d3_dumbbell(arbl, x_value = "kommun", y_value = "kvot", group = "ar",
+                       y_axis_format = "percent", point_size_column = "antal", point_size = 7,
+                       y_break_line = c(0.065, 0.068), y_break_line_label = c("Snitt 2019", "Snitt 2024"),
+                       y_break_line_color = c("#1a9fb3", "#ffc107"),
+                       sort_axis_by = "original", reverse_categories = TRUE, subtitle_width = 50,
+                       subtitle = "Punktens storlek visar antalet arbetslösa. Streckade linjer: snittet för kommunerna.")
+if (interactive()) p5
+
 # Spara alla diagram ovan i samma fristående HTML-fil (här i en temporär katalog).
 # Namnen i listan blir rubriker i filen.
 func_d3_spara(list("Hanteldiagram" = p1, "Färgat efter förändring" = p2,
-                   "Stående hantlar" = p3, "Större text och lodräta stödlinjer" = p4),
+                   "Stående hantlar" = p3, "Större text och lodräta stödlinjer" = p4,
+                   "Andelar, storlek och snittlinjer" = p5),
               tempfile(fileext = ".html"))
 }
 \seealso{

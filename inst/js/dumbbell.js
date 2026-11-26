@@ -15,6 +15,11 @@
     var T = spec.text, F = spec.facets, L = spec.legend, LB = spec.labels, TT = spec.tooltip;
     var IA = spec.interactive, HLS = spec.highlight, PT = spec.point, LN = spec.line;
     var HOR = spec.horizontal;
+    var PCT = spec.value_format === "percent";   // y_axis_format: andelar 0–1 visas som "82 %"
+    var PCT_SUFFIX = " %";
+    // Värde och axeltext (procent: x 100; axelns decimaler två färre än för andelen)
+    function fmtVal(v, dec) { return vgrD3.fmt(PCT ? 100 * v : v, dec, " "); }
+    function fmtTick(tk, dec) { return PCT ? vgrD3.fmt(100 * tk, Math.max(0, dec - 2), " ") + PCT_SUFFIX : vgrD3.fmt(tk, dec, " "); }
     var dur = spec.animation.duration || 0;
     var esc = vgrD3.esc;
     var fileName = vgrD3.slug((T.title && T.title.join(" ")) || "dumbbell");
@@ -35,6 +40,11 @@
 
     var symbolType = { 15: d3.symbolSquare, 17: d3.symbolTriangle, 18: d3.symbolDiamond }[PT.shape] || d3.symbolCircle;
     var symbolPath = d3.symbol().type(symbolType).size(Math.PI * PT.r * PT.r)();
+    // point_size_column: punktens radie per period (r.size = [start, slut] i px), annars point_size
+    function radius(r, k) { return r.size && r.size[k] != null ? r.size[k] : PT.r; }
+    function symbolFor(r, k) {
+      return r.size && r.size[k] != null ? d3.symbol().type(symbolType).size(Math.PI * r.size[k] * r.size[k])() : symbolPath;
+    }
 
     // -------------------------------------------------------------------------
     //  Sortering (samma regler som i R: stabil, NA sist, text i C-ordning)
@@ -83,7 +93,7 @@
           Math.sign(r.change) === sgn) val += sgn * 1.5 * arrowOff;
       return { val: val, cat: HOR ? LB.nudge_y : LB.nudge_x, align: sgn };
     }
-    var fmtLabel = function (v) { return vgrD3.fmt(v, 1, " "); };
+    var fmtLabel = function (v) { return fmtVal(v, 1) + (PCT ? PCT_SUFFIX : ""); };
     // Etiketternas verkliga storlek (som labelNodes mäter dem) — används för axelutrymmet
     var labPad = LB.box && !LB.glow ? LB.size * 0.25 : 1;
     var labGlow = LB.glow ? LB.glow_width : 0;
@@ -92,7 +102,7 @@
       it.w = vgrD3.measureText(svg, fmtLabel(v), LB.size, font) + 2 * labPad + labGlow;
       it.h = LB.size * 1.2 + 2 * labPad + labGlow;
     });
-    var fmtTip = function (v) { return vgrD3.fmt(v, TT.decimals, " ") + TT.unit; };
+    var fmtTip = function (v) { return fmtVal(v, TT.decimals) + (PCT ? (TT.unit || PCT_SUFFIX) : TT.unit); };
 
     // -------------------------------------------------------------------------
     //  Fasta lager och rubriker
@@ -224,6 +234,7 @@
           });
         }
         if (spec.baseline.show) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+        ((spec.value_ref || {}).v || []).forEach(function (v) { lo = Math.min(lo, v); hi = Math.max(hi, v); });   // value_break_line
         if (LB.show && !LB.repel) {
           LB.items.forEach(function (it) {
             var r = rows[it.rad];
@@ -235,7 +246,7 @@
         if (lo === hi) { lo -= 1; hi += 1; }
         var span = hi - lo;
         // Innehållet som axelns brytpunkter ska täcka: datan, plus 0 när nollinjen ritas
-        var content = [d3.min(vals), d3.max(vals)];
+        var content = [d3.min(vals.concat((spec.value_ref || {}).v || [])), d3.max(vals.concat((spec.value_ref || {}).v || []))];   // med value_break_line
         if (content[0] == null) content = [lo, hi];
         if (spec.baseline.show) content = [Math.min(content[0], 0), Math.max(content[1], 0)];
         return { dom: [lo - span * 0.05, hi + span * 0.05], arrowOff: arrowOff, dataRange: [d3.min(vals), d3.max(vals)],
@@ -284,7 +295,7 @@
         var perPx = lenPx / (vinfo.dom[1] - vinfo.dom[0]);
         for (var k = 0; k < 10 && tks.length > 2; k++) {
           var step = tks[1] - tks[0], dec = d3.precisionFixed(step);
-          var need = HOR ? d3.max(tks, function (tk) { return vgrD3.measureText(svg, vgrD3.fmt(tk, dec, " "), size, font); }) + pt(4)
+          var need = HOR ? d3.max(tks, function (tk) { return vgrD3.measureText(svg, fmtTick(tk, dec), size, font); }) + pt(4)
                          : size * 1.3;
           if (tks.length <= 7 && step * perPx >= need) break;
           // Behåll multiplerna av det dubbla steget (2, 4, 6 hellre än 3, 5, 7), annars varannan
@@ -340,7 +351,7 @@
         var tks = valueTicks(panelV[i], valueLen(Math.floor(i / ncol)), valSize);
         var dec = tks.length > 1 ? d3.precisionFixed(tks[1] - tks[0]) : 0;
         tks.forEach(function (tk) {
-          valW = Math.max(valW, vgrD3.measureText(svg, vgrD3.fmt(tk, dec, " "), valSize, font));
+          valW = Math.max(valW, vgrD3.measureText(svg, fmtTick(tk, dec), valSize, font));
         });
       });
       var leftW = (HOR ? catW : valW) + pt(4);
@@ -389,7 +400,9 @@
             catMargin = Math.min(Math.max(0.6, halfW / unitPx), Math.max(0.6, (nc - 1) / 2));
           }
         }
-        var cs = d3.scaleLinear().domain([1 - catMargin, nc + catMargin]).range(HOR ? [rect.y1, rect.y0] : [rect.x0, rect.x1]);
+        // reverse_categories: första kategorin överst (liggande) eller längst till höger (stående)
+        var cs = d3.scaleLinear().domain([1 - catMargin, nc + catMargin])
+          .range(HOR ? (spec.reverse ? [rect.y0, rect.y1] : [rect.y1, rect.y0]) : (spec.reverse ? [rect.x1, rect.x0] : [rect.x0, rect.x1]));
         var unit = Math.abs(cs(1) - cs(0));
         var vs = d3.scaleLinear().domain(vinfo.dom).range(HOR ? [rect.x0, rect.x1] : [rect.y1, rect.y0]);
         var ticks = valueTicks(vinfo, HOR ? rect.x1 - rect.x0 : rect.y1 - rect.y0, valSize);
@@ -414,16 +427,31 @@
         // true/false eller "x"/"y" (linjer från den visade x- resp. y-axeln = lodräta resp. vågräta).
         // Värdelinjerna är lodräta på liggande dumbbells, kategorilinjerna vågräta
         function gridOn(setting, vertical) { return setting === true || (setting === "x" && vertical) || (setting === "y" && !vertical); }
-        var GMIN = spec.grid.minor, GMAJ = spec.grid.major;
-        if (gridOn(GMIN, HOR)) for (var k = 1; k < ticks.length; k++) valLine((ticks[k - 1] + ticks[k]) / 2, "#f2f2f2", 0.85);
-        if (gridOn(GMAJ, HOR)) ticks.forEach(function (tk) { valLine(tk, "#e5e5e5", 1.42); });
+        var GR = spec.grid, GMIN = GR.minor, GMAJ = GR.major;   // färg och tjocklek: grid_* (px)
+        if (gridOn(GMIN, HOR)) for (var k = 1; k < ticks.length; k++) valLine((ticks[k - 1] + ticks[k]) / 2, GR.minor_color, GR.minor_width);
+        if (gridOn(GMAJ, HOR)) ticks.forEach(function (tk) { valLine(tk, GR.major_color, GR.major_width); });
         if (gridOn(GMAJ, !HOR)) {
           pi.cats.forEach(function (c) {
             var p = cs(idx[c]);
             grid.append("line").attr("x1", HOR ? rect.x0 : p).attr("x2", HOR ? rect.x1 : p)
-              .attr("y1", HOR ? p : rect.y0).attr("y2", HOR ? p : rect.y1).attr("stroke", "#e5e5e5").attr("stroke-width", 1.42);
+              .attr("y1", HOR ? p : rect.y0).attr("y2", HOR ? p : rect.y1).attr("stroke", GR.major_color).attr("stroke-width", GR.major_width);
           });
         }
+        // value_break_line: streckade linjer tvärs över panelen, med etikett och färg per linje
+        var VR = spec.value_ref || { v: [] };
+        VR.v.forEach(function (v, j) {
+          var p = vs(v), col = VR.color && VR.color.length ? VR.color[j % VR.color.length] : "#000000";
+          grid.append("line").attr("x1", HOR ? p : rect.x0).attr("x2", HOR ? p : rect.x1)
+            .attr("y1", HOR ? rect.y0 : p).attr("y2", HOR ? rect.y1 : p)
+            .attr("stroke", col).attr("stroke-width", 1.42).attr("stroke-dasharray", "6 4");
+          var lab = VR.label && VR.label.length ? VR.label[j % VR.label.length] : null;
+          if (lab) {
+            grid.append("text").attr("x", HOR ? p + 5 : rect.x1 - 4).attr("y", HOR ? rect.y0 + 14 : p - 6)
+              .attr("text-anchor", HOR ? "start" : "end").attr("fill", col)
+              .attr("stroke", "#ffffff").attr("stroke-width", 3).attr("paint-order", "stroke")
+              .style("font-size", (13 * (spec.text_scale || 1)) + "px").style("font-family", font).text(lab);
+          }
+        });
         if (spec.baseline.show) {
           var bp = vs(0);
           grid.append("line").attr("x1", HOR ? bp : rect.x0).attr("x2", HOR ? bp : rect.x1)
@@ -474,9 +502,9 @@
           .attr("stroke-width", LN.size).attr("stroke-opacity", 0.8)
           .attr("stroke-dasharray", LN.dash ? LN.dash.map(function (v) { return v * LN.size; }).join(" ") : null)
           .attr("display", function (r) { return r.start == null || r.end == null || state.hidden[0] || state.hidden[1] ? "none" : null; });
-        var startP = all.select(".vgr-start").attr("d", symbolPath).attr("fill", spec.colors[0]).attr("fill-opacity", PT.alpha)
+        var startP = all.select(".vgr-start").attr("d", function (r) { return symbolFor(r, 0); }).attr("fill", spec.colors[0]).attr("fill-opacity", PT.alpha)
           .attr("display", function (r) { return r.start == null || state.hidden[0] ? "none" : null; });
-        var endP = all.select(".vgr-end").attr("d", symbolPath).attr("fill", spec.colors[1]).attr("fill-opacity", PT.alpha)
+        var endP = all.select(".vgr-end").attr("d", function (r) { return symbolFor(r, 1); }).attr("fill", spec.colors[1]).attr("fill-opacity", PT.alpha)
           .attr("display", function (r) { return r.end == null || state.hidden[1] ? "none" : null; });
         if (state.first && spec.animation.draw && dur > 0) {
           link.attr("x1", function (r) { return P(r.x, r.start)[0]; }).attr("y1", function (r) { return P(r.x, r.start)[1]; })
@@ -525,7 +553,7 @@
         var AXL = spec.axis_line || { x: true, y: true };   // x_axis_line / y_axis_line (standard: båda, som tidigare)
         if (AXL.x) axes.append("line").attr("x1", rect.x0).attr("x2", rect.x1).attr("y1", rect.y1).attr("y2", rect.y1).attr("stroke", "#4d4d4d").attr("stroke-width", 1.42);
         if (AXL.y) axes.append("line").attr("x1", rect.x0).attr("x2", rect.x0).attr("y1", rect.y0).attr("y2", rect.y1).attr("stroke", "#4d4d4d").attr("stroke-width", 1.42);
-        var valLabels = ticks.map(function (tk) { return { p: vs(tk), label: vgrD3.fmt(tk, tdec, " ") }; });
+        var valLabels = ticks.map(function (tk) { return { p: vs(tk), label: fmtTick(tk, tdec) }; });
         var catLabels = pi.cats.map(function (c) { return { p: cs(idx[c]), label: c, key: c }; });
         var leftL = leftLabels ? (HOR ? catLabels : valLabels) : [];
         var bottomL = bottomLabels(i) ? (HOR ? valLabels : catLabels) : [];
@@ -584,8 +612,8 @@
             var points = [];
             pi.rows.forEach(function (r) {
               if (!idx[r.x]) return;
-              if (r.start != null && !state.hidden[0]) points.push({ x: P(r.x, r.start)[0], y: P(r.x, r.start)[1], r: PT.r + 2 });
-              if (r.end != null && !state.hidden[1]) points.push({ x: P(r.x, r.end)[0], y: P(r.x, r.end)[1], r: PT.r + 2 });
+              if (r.start != null && !state.hidden[0]) points.push({ x: P(r.x, r.start)[0], y: P(r.x, r.start)[1], r: radius(r, 0) + 2 });
+              if (r.end != null && !state.hidden[1]) points.push({ x: P(r.x, r.end)[0], y: P(r.x, r.end)[1], r: radius(r, 1) + 2 });
               // Riktningspilen (början, mitten, spetsen) är också ett hinder, annars dras etiketten över den
               if (spec.arrows.show && !state.hidden[0] && !state.hidden[1] && r.end != null && r.change != null &&
                   Math.abs(r.change) > spec.arrows.threshold) {
@@ -626,7 +654,8 @@
       if (!state.hidden[1]) html += vgrD3.tooltipRow(spec.periods[1], r.end == null ? "–" : fmtTip(r.end), spec.colors[1]);
       if (r.change != null && !state.hidden[0] && !state.hidden[1]) {
         var sign = r.change > 0 ? "+" : "";
-        var txt = sign + fmtTip(r.change);
+        // Förändringens enhet: tooltip_unit_change (standard tooltip_unit; procentenheter vid y_axis_format = "percent")
+        var txt = sign + fmtVal(r.change, TT.decimals) + (TT.unit_change != null ? TT.unit_change : TT.unit);
         if (TT.percent && r.start) txt += " (" + sign + vgrD3.fmt(100 * r.change / Math.abs(r.start), TT.set_decimals != null ? TT.set_decimals : 1, " ") + " %)";
         html += vgrD3.tooltipRow("Förändring", txt);
       }

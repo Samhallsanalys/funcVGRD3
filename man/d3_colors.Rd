@@ -34,12 +34,14 @@ Lagret tar egentligen vilka parametrar som helst med fullständiga namn, precis 
 \item linjediagram: \code{colors}, \code{data_label_color}, \code{data_label_box_color},
 \code{data_label_glow_color}, \code{highlight_color}, \code{group_highlight_label_color},
 \code{group_highlight_unhighlighted_color}, \code{x_shade_color}
+\item ytdiagram: \code{colors}, \code{area_line_color}, \code{x_shade_color}
 \item stapeldiagram: \code{colors}, \code{color_palette}, \code{data_label_color}, \code{data_label_box_color},
-\code{bar_line_color}, \code{color_negative}, \code{reference_color}, \code{highlight_color}
+\code{bar_line_color}, \code{color_negative}, \code{reference_color}, \code{highlight_color},
+\code{data_label_inside_color}
 \item hanteldiagram: \code{line_color}, \code{baseline_color}, \code{colors}, \code{color_darkest},
 \code{color_lightest}, \code{before_color}, \code{after_color}, \code{highlight_background_color},
 \code{highlight_bar_color}, \code{data_label_color}, \code{data_label_box_color},
-\code{data_label_glow_color}
+\code{data_label_glow_color}, \code{y_break_line_color}
 \item cirkeldiagram: \code{colors}, \code{pie_border_color}, \code{pie_other_color}, \code{data_label_color},
 \code{data_label_box_color}, \code{data_label_glow_color}, \code{highlight_color},
 \code{group_highlight_unhighlighted_color}
@@ -47,6 +49,8 @@ Lagret tar egentligen vilka parametrar som helst med fullständiga namn, precis 
 \code{data_label_color}, \code{data_label_box_color}
 \item histogram: \code{colors}, \code{bar_line_color}, \code{data_label_color}
 \item lådagram: \code{colors}, \code{box_line_color}, \code{data_label_color}
+\item alla diagram med stödlinjer (linje-, yt-, stapel-, hantel-, spridnings- och lådagram samt
+histogram): \code{grid_major_color}, \code{grid_minor_color}
 }
 }
 \examples{

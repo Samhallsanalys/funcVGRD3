@@ -24,16 +24,17 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    Argument \tab Parameter \tab Finns i \cr
    \code{show} \tab \code{tooltip_show} \tab alla \cr
    \code{name_column} \tab \code{tooltip_name_column} \tab koropletkarta, förändringskarta, täthetskarta \cr
-   \code{columns} \tab \code{tooltip_columns} \tab koropletkarta, förändringskarta, täthetskarta, linjediagram, stapeldiagram, hanteldiagram, spridningsdiagram \cr
+   \code{columns} \tab \code{tooltip_columns} \tab koropletkarta, förändringskarta, täthetskarta, linjediagram, ytdiagram, stapeldiagram, hanteldiagram, spridningsdiagram \cr
    \code{rank} \tab \code{tooltip_rank} \tab koropletkarta, förändringskarta \cr
    \code{rank_order} \tab \code{tooltip_rank_order} \tab koropletkarta, förändringskarta \cr
    \code{class} \tab \code{tooltip_class} \tab koropletkarta, förändringskarta \cr
    \code{value_label} \tab \code{tooltip_value_label} \tab koropletkarta, förändringskarta \cr
    \code{unit} \tab \code{tooltip_unit} \tab alla \cr
-   \code{unit_change} \tab \code{tooltip_unit_change} \tab koropletkarta, förändringskarta \cr
+   \code{unit_change} \tab \code{tooltip_unit_change} \tab koropletkarta, förändringskarta, hanteldiagram \cr
    \code{decimals} \tab \code{tooltip_decimals} \tab alla \cr
    \code{mode} \tab \code{tooltip_mode} \tab linjediagram \cr
    \code{change_percent} \tab \code{tooltip_change_percent} \tab hanteldiagram \cr
+   \code{x_format} \tab \code{tooltip_x_format} \tab linjediagram, ytdiagram, stapeldiagram \cr
 }
 }
 \examples{

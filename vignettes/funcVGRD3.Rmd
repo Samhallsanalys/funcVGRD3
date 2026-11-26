@@ -72,6 +72,29 @@ Diagrammet med en linje per kommun (`p2` ovan):
 p2
 ```
 
+Med `y_axis_format = "percent"` visas andelar mellan 0 och 1 som procent på axeln, i
+tooltipen och i etiketterna, `y_axis_expand` styr luften på y-axeln, `tooltip_x_format`
+bestämmer tooltipens rubrik (t.ex. "År 2020") och `grid_*` stödlinjernas färg och
+tjocklek. De fyra finns också i stapel- och ytdiagrammet, och `y_axis_format` och `grid_*`
+i hanteldiagrammet.
+
+### Ytdiagram
+
+`func_d3_ytdiagram()` ritar staplade ytor, en per grupp, med samma argument som
+linjediagrammet utom etiketter, markering, prognos och indexknappar. Med
+`area_type = "filled"` visar ytorna gruppernas andel av summan och y-axeln går från 0 till
+100 %. Den första gruppen hamnar överst, och tooltipen visar alla grupper vid x-värdet med
+värde, andel och summa.
+
+```{r, code = exempel("func_d3_ytdiagram")}
+```
+
+100 % staplade ytor, en panel per land (`p2` ovan):
+
+```{r}
+p2
+```
+
 ### Stapeldiagram
 
 `func_d3_stapeldiagram()` ritar stående eller liggande staplar, med obligatoriska
@@ -81,7 +104,12 @@ typerna. Funktionen kan också anropas som `func_d3_barchart()`, originalets nam
 Tilläggen är bland annat en sorteringsmeny, en rullista med uppspelning för t.ex. år
 (`interactive_filter_column`), markerade kategorier (`highlight_x_values`),
 referensvärden per stapel (`reference_column`) och en egen färg för negativa värden
-(`color_negative`).
+(`color_negative`). Etiketterna kan tas ur en kolumn (`data_label_column`, med `\n` för
+ny rad) och läggas inuti stapeln när de inte ryms ovanför (`data_label_overflow =
+"inside"`), kategoriaxelns text radbryts med `x_axis_text_wrap`, `y_axis_expand` styr
+luften på värdeaxeln, `x_axis_breaks` och `x_axis_minor_breaks` skalstrecken på en
+tal- eller datumaxel, och `reverse_categories` och `legend_reverse` vänder ordningen på
+kategorierna respektive i förklaringen.
 
 ```{r, code = exempel("func_d3_stapeldiagram")}
 ```
@@ -99,7 +127,10 @@ De obligatoriska parametrarna är `df`, `x_value` (kategorierna), `y_value` (vä
 `group` (perioderna). Tooltipen visar start, slut och förändring. Med
 `line_color_by_change = TRUE` färgas linjerna efter om värdet ökat eller minskat.
 `text_scale` förstorar eller förminskar all text på en gång, t.ex. inför en export, och
-`show_major_grid = "x"` eller `"y"` visar stödlinjerna i bara en riktning.
+`show_major_grid = "x"` eller `"y"` visar stödlinjerna i bara en riktning. Punktens
+storlek kan följa en kolumn (`point_size_column`), `y_break_line` drar streckade
+referenslinjer, t.ex. ett genomsnitt per period, och `tooltip_unit_change` sätter enheten
+för förändringen, t.ex. " procentenheter".
 
 ```{r, code = exempel("func_d3_dumbbell")}
 ```
@@ -287,7 +318,8 @@ karta2 + d3_size(width = 650, height = 760)
 `d3_plot()` är ett alternativ till att ange alla argument i ett anrop, i samma anda som
 ggplot2. `d3_plot(df)` tar emot data, ett diagramtypslager väljer diagramtyp och övriga
 lager lägger till inställningar. Diagramtypslagren är `d3_map()`, `d3_map_change()`,
-`d3_heatmap()`, `d3_line()`, `d3_bar()`, `d3_dumbbell()` och `d3_pie()`, och de tar
+`d3_heatmap()`, `d3_line()`, `d3_area()`, `d3_bar()`, `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`,
+`d3_histogram()` och `d3_boxplot()`, och de tar
 diagramfunktionens parametrar med fullständiga namn. Det gör även `d3_labs()`,
 `d3_theme()`, `d3_params()` och `d3_colors()`.
 
@@ -350,6 +382,7 @@ som finns:
 | `func_d3_karta_change()` | Rita en interaktiv karta över förändring mellan två år | `df`, `df_value`, `geom_col` |
 | `func_d3_karta_heatmap()` | Rita en interaktiv täthetskarta för punkter | `df`, `df_value`, `basemap` |
 | `func_d3_linjediagram()` | Rita ett interaktivt linjediagram | `df`, `x_value`, `y_value` |
+| `func_d3_ytdiagram()` | Rita ett interaktivt ytdiagram | `df`, `x_value`, `y_value` |
 | `func_d3_stapeldiagram()`, `func_d3_barchart()` | Rita ett interaktivt stapeldiagram | `df`, `x_value`, `y_value` |
 | `func_d3_dumbbell()` | Rita ett interaktivt hanteldiagram | `df`, `x_value`, `y_value`, `group` |
 | `func_d3_cirkeldiagram()` | Rita ett interaktivt cirkel- eller munkdiagram | `df`, `x_value`, `y_value` |
@@ -360,7 +393,7 @@ som finns:
 | `func_d3_oppna()` | Öppna en sparad fil, t.ex. HTML i webbläsaren | `fil` |
 | `func_d3_hjalp()` | Lista funktionerna i funcVGRD3 | – |
 | `d3_plot()` | Starta ett diagram för `+`-syntaxen | `df` |
-| `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_bar()`, `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()`, `d3_boxplot()` | Välj diagramtyp och ange dess parametrar | – |
+| `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_area()`, `d3_bar()`, `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()`, `d3_boxplot()` | Välj diagramtyp och ange dess parametrar | – |
 | `d3_labs()`, `d3_theme()`, `d3_params()`, `d3_colors()` | Lägg till parametrar med fullständiga namn | – |
 | `d3_labels()`, `d3_legend()`, `d3_breaks()`, `d3_tooltip()`, `d3_interactive()`, `d3_animation()`, `d3_margin()`, `d3_time()`, `d3_bubbles()`, `d3_facet()`, `d3_highlight()`, `d3_donut()` | Lägg till parametrar i en familj (prefix) | – |
 | `d3_basemap()` | Lägg till en bakgrundskarta och `basemap_*` | `basemap` |

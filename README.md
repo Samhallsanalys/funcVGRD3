@@ -96,6 +96,7 @@ Fler exempel finns på varje funktions hjälpsida (`?func_d3_karta`) och i vigne
 | `func_d3_karta_change()` | Rita en interaktiv karta över förändring mellan två år | `df`, `df_value`, `geom_col` |
 | `func_d3_karta_heatmap()` | Rita en interaktiv täthetskarta för punkter | `df`, `df_value`, `basemap` |
 | `func_d3_linjediagram()` | Rita ett interaktivt linjediagram | `df`, `x_value`, `y_value` |
+| `func_d3_ytdiagram()` | Rita ett interaktivt ytdiagram | `df`, `x_value`, `y_value` |
 | `func_d3_stapeldiagram()`, `func_d3_barchart()` | Rita ett interaktivt stapeldiagram | `df`, `x_value`, `y_value` |
 | `func_d3_dumbbell()` | Rita ett interaktivt hanteldiagram | `df`, `x_value`, `y_value`, `group` |
 | `func_d3_cirkeldiagram()` | Rita ett interaktivt cirkel- eller munkdiagram | `df`, `x_value`, `y_value` |
@@ -110,7 +111,7 @@ Fler exempel finns på varje funktions hjälpsida (`?func_d3_karta`) och i vigne
 Datasetet `vg_kommuner` innehåller Västra Götalands 49 kommuner som `sf`-objekt och
 används i kartexemplen (`?vg_kommuner`).
 
-Lagren är `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_bar()`,
+Lagren är `d3_map()`, `d3_map_change()`, `d3_heatmap()`, `d3_line()`, `d3_area()`, `d3_bar()`,
 `d3_dumbbell()`, `d3_pie()`, `d3_scatter()`, `d3_histogram()`, `d3_boxplot()`, `d3_labs()`, `d3_theme()`, `d3_params()`, `d3_colors()`,
 `d3_labels()`, `d3_legend()`, `d3_breaks()`, `d3_tooltip()`, `d3_interactive()`,
 `d3_animation()`, `d3_margin()`, `d3_time()`, `d3_bubbles()`, `d3_facet()`,
@@ -150,7 +151,7 @@ för hand.
 
 Samma historik finns i NEWS.md och visas i R med `news(package = "funcVGRD3")`.
 
-### 0.15.0 (2026-11-24)
+### 0.15.0 (2026-11-26)
 
 #### Nytt
 
@@ -167,12 +168,70 @@ Samma historik finns i NEWS.md och visas i R med `news(package = "funcVGRD3")`.
   * `y_break_line_label` skriver text vid referenslinjerna.
 * `d3_boxplot()`: lådagrammet i `+`-syntaxen, t.ex.
   `d3_plot(df) + d3_boxplot(x_value = "region", y_value = "inkomst")`.
+* `func_d3_ytdiagram()`: nytt interaktivt ytdiagram, staplat (`area_type = "stacked"`) eller
+  100 % (`"filled"`), med samma argument som linjediagrammet utom etiketter, markering,
+  prognos och indexknappar. Tooltipen visar alla grupper vid x-värdet med värde, andel och
+  summa. I `+`-syntaxen: `d3_area()`.
+* `func_d3_stapeldiagram()`:
+  * `data_label_column`: etikettexten ur en kolumn, med `\n` för ny rad, t.ex.
+    "2 193 mdr kr\n(90,0 %)". Värdeaxeln får luft för etiketter med flera rader.
+  * `data_label_overflow = "inside"` lägger en etikett som inte ryms ovanför stapeln
+    inuti den, i färgen `data_label_inside_color` (vitt).
+  * `x_axis_text_wrap` radbryter kategoriaxelns text, och `\n` i ett kategorinamn ger en
+    ny rad. Utrymmet under panelen räknas efter antalet rader.
+  * `y_axis_expand = c(nedre, övre)` styr luften på värdeaxeln; med `y_axis_max = 100` och
+    `y_axis_expand = c(0, 0)` slutar axeln vid 100.
+  * `x_axis_breaks`, `x_axis_n_breaks` och `x_axis_minor_breaks` för en tal- eller
+    datumaxel, t.ex. årtal vartannat år och en stödlinje per år.
+  * `reverse_categories = TRUE` ger den första kategorin överst i liggande staplar.
+  * `legend_reverse = TRUE` vänder förklaringen, t.ex. så att den läses i samma ordning
+    som delarna i en liggande, staplad stapel.
+* `func_d3_dumbbell()`:
+  * `subtitle_width` radbryter underrubriken; egna `\n` behålls.
+  * `point_size_column`: punktens storlek efter en kolumn (ytan proportionell mot värdet,
+    den största punkten får `point_size`). Värdet visas också i tooltipen.
+  * `y_break_line`, `y_break_line_label` och `y_break_line_color`: streckade
+    referenslinjer med text, t.ex. ett genomsnitt per period. Samma namn som i stapel-,
+    linje-, spridnings- och lådagrammet, plus en färg per linje.
+  * `tooltip_unit_change`: enhet för förändringen i tooltipen, t.ex. " procentenheter".
+  * `reverse_categories = TRUE` ger den första kategorin överst.
+* Flera diagramtyper:
+  * `y_axis_format = "percent"` (stapel-, linje-, yt- och hanteldiagram) visar andelar
+    mellan 0 och 1 som procent ("82 %") på axeln, i tooltipen och i etiketterna.
+  * `tooltip_x_format` (stapel-, linje- och ytdiagram) bestämmer tooltipens rubrik: ett
+    datumformat, t.ex. `"%Y"`, eller en funktion, t.ex. `function(x) paste(x, "år")`.
+  * `grid_major_color`, `grid_minor_color`, `grid_major_width` och `grid_minor_width`
+    (linje-, yt-, stapel-, hantel-, spridnings- och lådagram samt histogram) ändrar
+    stödlinjernas färg och tjocklek. De kan också sättas med `d3_theme()`.
+  * `y_axis_expand` och `legend_reverse` finns också i linjediagrammet.
+  * I `+`-syntaxen följer `bar_type`, `bar_line_color` och `bar_line_width` med som
+    `area_type`, `area_line_color` och `area_line_width` när ett stapeldiagram görs om till
+    ett ytdiagram med `d3_area()`, och tvärtom.
+
+#### Ändrat
+
+* `func_d3_dumbbell()`: underrubriken radbryts efter 60 tecken (`subtitle_width`), som i
+  stapeldiagrammet. Förut radbröts den inte och kunde klippas av till höger.
+  `subtitle_width = NULL` ger det gamla beteendet.
+* `func_d3_stapeldiagram()`: de mindre stödlinjerna är 0,71 px i stället för 0,7 px, som i
+  linjediagrammet (`grid_minor_width = 0.25`).
+
+#### Rättat
+
+* Dataetiketter med flera rader (t.ex. `data_label_width` eller `data_label_column`) ritades
+  ungefär en tredjedels rad för högt i alla diagram med etiketter; de står nu centrerade på
+  sin plats.
+* `func_d3_stapeldiagram()`: en numerisk x-axel med `x_number_format = "whole"` får inga
+  brutna skalstreck (som 2002,5, som skrevs "2002"), som i linjediagrammet.
 
 #### Dokumentation
 
 * Hjälpsidorna för `d3_colors()`, `d3_labs()`, `d3_facet()`, `d3_labels()`,
   `d3_interactive()` och `d3_animation()` tar med spridningsdiagram, histogram och
   lådagram där de har parametrarna.
+* Hjälpsidorna för `d3_labels()`, `d3_legend()`, `d3_tooltip()`, `d3_colors()`,
+  `d3_theme()`, `d3_labs()`, `d3_facet()`, `d3_interactive()` och `d3_animation()` tar med
+  de nya parametrarna och ytdiagrammet.
 
 ### 0.14.0 (2026-11-18)
 

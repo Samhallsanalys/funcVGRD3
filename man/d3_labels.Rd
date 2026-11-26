@@ -28,19 +28,19 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{show} \tab \code{data_label_show} \tab koropletkarta, förändringskarta \cr
    \code{text_size} \tab \code{data_label_text_size} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram \cr
    \code{text_color} \tab \code{data_label_text_color} \tab koropletkarta, förändringskarta \cr
-   \code{box} \tab \code{data_label_box} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
-   \code{box_color} \tab \code{data_label_box_color} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
-   \code{box_alpha} \tab \code{data_label_box_alpha} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
+   \code{box} \tab \code{data_label_box} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram \cr
+   \code{box_color} \tab \code{data_label_box_color} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram \cr
+   \code{box_alpha} \tab \code{data_label_box_alpha} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram, spridningsdiagram \cr
    \code{decimals} \tab \code{data_label_decimals} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram \cr
    \code{decimal} \tab \code{data_label_decimal} \tab koropletkarta \cr
    \code{glow} \tab \code{data_label_glow} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
    \code{glow_color} \tab \code{data_label_glow_color} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
    \code{glow_sigma} \tab \code{data_label_glow_sigma} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
    \code{glow_expand} \tab \code{data_label_glow_expand} \tab koropletkarta, förändringskarta, linjediagram, hanteldiagram, cirkeldiagram \cr
-   \code{column} \tab \code{data_label_column} \tab koropletkarta, förändringskarta, spridningsdiagram \cr
+   \code{column} \tab \code{data_label_column} \tab koropletkarta, förändringskarta, spridningsdiagram, stapeldiagram \cr
    \code{show_value} \tab \code{data_label_show_value} \tab koropletkarta, förändringskarta \cr
    \code{separator} \tab \code{data_label_separator} \tab koropletkarta, förändringskarta \cr
-   \code{repel} \tab \code{data_label_repel} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
+   \code{repel} \tab \code{data_label_repel} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, spridningsdiagram \cr
    \code{force} \tab \code{data_label_force} \tab koropletkarta, förändringskarta, stapeldiagram \cr
    \code{max_overlaps} \tab \code{data_label_max_overlaps} \tab koropletkarta, förändringskarta, stapeldiagram, spridningsdiagram \cr
    \code{nudge_x} \tab \code{data_label_nudge_x} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, hanteldiagram \cr
@@ -50,14 +50,14 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{line_size} \tab \code{data_label_line_size} \tab koropletkarta, förändringskarta \cr
    \code{outside_map} \tab \code{data_label_outside_map} \tab koropletkarta, förändringskarta \cr
    \code{expand_factor} \tab \code{data_label_expand_factor} \tab koropletkarta, förändringskarta \cr
-   \code{filter} \tab \code{data_label_filter} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram \cr
+   \code{filter} \tab \code{data_label_filter} \tab koropletkarta, förändringskarta, linjediagram, stapeldiagram, cirkeldiagram, spridningsdiagram \cr
    \code{filter_column} \tab \code{data_label_filter_column} \tab koropletkarta, förändringskarta \cr
    \code{thousands_mark} \tab \code{data_label_thousands_mark} \tab koropletkarta, förändringskarta \cr
    \code{thousands_sep} \tab \code{data_label_thousands_sep} \tab förändringskarta \cr
    \code{zoom} \tab \code{data_label_zoom} \tab koropletkarta, förändringskarta \cr
    \code{zoom_overlap} \tab \code{data_label_zoom_overlap} \tab koropletkarta, förändringskarta \cr
    \code{color} \tab \code{data_label_color} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram, histogram, spridningsdiagram, lådagram \cr
-   \code{format} \tab \code{data_label_format} \tab linjediagram, stapeldiagram, cirkeldiagram \cr
+   \code{format} \tab \code{data_label_format} \tab linjediagram, stapeldiagram, cirkeldiagram, spridningsdiagram \cr
    \code{x_values} \tab \code{data_label_x_values} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
    \code{y_values} \tab \code{data_label_y_values} \tab linjediagram, stapeldiagram, hanteldiagram, cirkeldiagram \cr
    \code{first_last} \tab \code{data_label_first_last} \tab linjediagram, stapeldiagram \cr
@@ -76,6 +76,8 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{only_first_last} \tab \code{data_label_only_first_last} \tab hanteldiagram \cr
    \code{min_share} \tab \code{data_label_min_share} \tab cirkeldiagram \cr
    \code{min_value} \tab \code{data_label_min_value} \tab cirkeldiagram \cr
+   \code{overflow} \tab \code{data_label_overflow} \tab stapeldiagram \cr
+   \code{inside_color} \tab \code{data_label_inside_color} \tab stapeldiagram \cr
 }
 }
 \examples{

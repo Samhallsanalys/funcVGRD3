@@ -71,6 +71,10 @@ func_d3_histogram(
   animation_play_interval = 1500,
   width = 1400,
   height = 800,
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
   .rendera = FALSE
 )
 }
@@ -253,6 +257,14 @@ uppspelningen körs.}
 
 \item{width, height}{Diagrammets storlek i pixlar. Diagrammet skalas ned när
 det inte får plats.}
+
+\item{grid_major_color}{Färg på de större stödlinjerna.}
+
+\item{grid_minor_color}{Färg på de mindre stödlinjerna.}
+
+\item{grid_major_width}{Tjocklek på de större stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{grid_minor_width}{Tjocklek på de mindre stödlinjerna (ggplot2:s \code{linewidth}).}
 
 \item{.rendera}{Intern. \code{TRUE} bygger diagrammet och används när objektet skrivs ut.
 Ändra inte.}

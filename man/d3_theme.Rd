@@ -20,7 +20,9 @@ Sätter typsnittet (\code{font}) och textstorlekarna, t.ex. \code{text_scale}, \
 \details{
 Lagret tar egentligen vilka parametrar som helst med fullständiga namn, precis som
 \code{\link[=d3_params]{d3_params()}}; namnet visar vad det är tänkt för. Vilka storleksparametrar som finns
-skiljer sig mellan diagramtyperna; se diagramfunktionens hjälpsida.
+skiljer sig mellan diagramtyperna; se diagramfunktionens hjälpsida. Stödlinjernas färg och
+tjocklek (\code{grid_major_color}, \code{grid_minor_color}, \code{grid_major_width},
+\code{grid_minor_width}) sätts också med fördel här, i alla diagram med stödlinjer.
 }
 \examples{
 arbl <- data.frame(

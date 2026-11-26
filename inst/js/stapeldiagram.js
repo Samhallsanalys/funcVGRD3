@@ -16,6 +16,8 @@
     var T = spec.text, X = spec.x, Y = spec.y, F = spec.facets, L = spec.legend, LB = spec.labels;
     var TT = spec.tooltip, IA = spec.interactive, HL = spec.highlight, REF = spec.reference;
     var HOR = spec.horizontal;
+    var PCT = Y.format === "percent";   // y_axis_format
+    var PCT_SUFFIX = " %";         // hårt mellanslag: "%" bryts aldrig till en egen rad
     var dur = spec.animation.duration || 0;
     var esc = vgrD3.esc;
     var fileName = vgrD3.slug((T.title && T.title.join(" ")) || "stapeldiagram");
@@ -205,6 +207,7 @@
           if (!tkeys[t] || seen[t]) return false;
           seen[t] = true; return true;
         }
+        if (LB.column && b.r.lt == null) return false;   // data_label_column utan text: ingen etikett
         return keys[b.r.k + SEP + b.key];
       });
     }
@@ -229,6 +232,59 @@
       return [lo - span * Y.expand[0], hi + span * Y.expand[1]];
     }
 
+    // Värdeaxelns luft för etiketter utanför stående staplar: etikettens kant ligger vid punkten (labelValue) och
+    // texten sträcker sig sin höjd utåt — med flera rader (data_label_column, radbrytning) mer än standardluften
+    // räcker till. Domänen breddas tills etiketterna ryms; datan behåller minst halva axeln (som vgrD3.padDomain)
+    // och en angiven y_axis_min/max låser den sidan. Inte med data_label_overflow = "inside": då flyttas en
+    // etikett som inte ryms in i stapeln när den ritas. an = etikettavståndet (autoNudge), null = räknas här
+    function padForLabels(dom, bars, an, lenPx) {
+      var repelOn = LB.repel && !(spec.has_groups && state.type !== "grouped");
+      if (!LB.show || LB.overflow !== "expand" || LB.position !== "outside" || LB.nudge_y !== 0 || repelOn || !(lenPx > 0)) return dom;
+      var lb = labelBars(bars);
+      if (!lb.length) return dom;
+      if (an == null) an = autoNudge(lb);
+      var pad = LB.box ? LB.size * 0.25 : 1;   // som vgrD3.labelNodes
+      var its = lb.map(function (b) {
+        var nLines = String(labelText(b)).split("\n").length;
+        return { a: labelValue(b, an), h: nLines * LB.size * 1.2 + 2 * pad + pt(2), sgn: b.stacked ? b.sgn : b.v };
+      });
+      var fixLo = Y.min != null && state.type === spec.bar_type, fixHi = Y.max != null && state.type === spec.bar_type;
+      var base = dom.slice(), d = dom.slice(), span = base[1] - base[0];
+      for (var i = 0; i < 10; i++) {
+        var perPx = (d[1] - d[0]) / lenPx, lo = base[0], hi = base[1];
+        its.forEach(function (it) {
+          if (it.sgn >= 0) hi = Math.max(hi, it.a + it.h * perPx); else lo = Math.min(lo, it.a - it.h * perPx);
+        });
+        if (fixLo) lo = base[0];
+        if (fixHi) hi = base[1];
+        if (hi - lo > 2 * span) {
+          var extra = hi - lo - 2 * span, room = (base[0] - lo) + (hi - base[1]);
+          lo += extra * (base[0] - lo) / room; hi -= extra * (hi - base[1]) / room;
+        }
+        d = [lo, hi];
+      }
+      return d;
+    }
+
+    // Kategoriaxelns text i rader: R har radbrutit den (x_axis_text_wrap) och "\n" i ett namn ger alltid en ny rad
+    var catLabelText = {};
+    if (X.level_labels) X.levels.forEach(function (c, i) { catLabelText[c] = X.level_labels[i]; });
+    function catTextLines(c) {
+      return String(Object.prototype.hasOwnProperty.call(catLabelText, c) ? catLabelText[c] : c).split("\n");
+    }
+
+    // Axeltext med flera rader (tk.lines): tspan-rader i stället för en rad. x(tk) = radernas x, firstDy(n) =
+    // första radens förskjutning — inklusive textens egen dy, som tspan-radens dy ersätter. En rad lämnas som den är
+    function splitLines(sel, x, firstDy) {
+      sel.each(function (tk) {
+        if (!tk.lines || tk.lines.length < 2) return;
+        var t = d3.select(this).text(null);
+        tk.lines.forEach(function (s, j) {
+          t.append("tspan").attr("x", x(tk)).attr("dy", j === 0 ? firstDy(tk.lines.length) : "1.2em").text(s);
+        });
+      });
+    }
+
     var isFilled = function () { return state.type === "filled" && spec.has_groups; };
     function valueTicks(vs) {
       var d = vs.domain();
@@ -240,6 +296,10 @@
         ticks = ticks.filter(function (t) { return t >= -1 - 1e-9 && t <= 1 + 1e-9; });
         var pdec = Math.max(0, d3.precisionFixed(step * 100));
         return ticks.map(function (t) { return { v: t, label: vgrD3.fmt(t * 100, pdec, null) + "%" }; });
+      }
+      if (PCT) {   // y_axis_format = "percent": andelar 0–1 som "82 %" (samma tusentalstecken som nedan)
+        var qdec = Math.max(0, d3.precisionFixed(step * 100));
+        return ticks.map(function (t) { return { v: t, label: fmtLabel(t * 100, qdec) + PCT_SUFFIX }; });
       }
       var dec = d3.precisionFixed(step);
       return ticks.map(function (t) { return { v: t, label: vgrD3.fmt(t, dec, " ") }; });
@@ -267,8 +327,11 @@
     }
     function isTotalLabel(b) { return b.stacked && LB.position === "outside"; }
     function labelText(b) {
+      // data_label_column: texten som den är ("\n" = ny rad); summaetiketterna på staplade staplar är fortfarande tal
+      if (LB.column && !isTotalLabel(b)) return b.r.lt == null ? null : String(b.r.lt);
       var val = isTotalLabel(b) ? b.rawTotal : b.v;   // stapelns summa för "outside" på staplade staplar
-      var base = LB.format === "percentage" ? fmtLabel(100 * val, LB.decimals) + "%" : fmtLabel(val, LB.decimals);
+      var base = LB.format === "percentage" ? fmtLabel(100 * val, LB.decimals) + "%"
+               : PCT ? fmtLabel(100 * val, LB.decimals) + PCT_SUFFIX : fmtLabel(val, LB.decimals);
       if (LB.format === "x_y") base = b.r.xt + LB.separator + base;
       var text = LB.show_group && !isTotalLabel(b) ? groupByKey[b.g].label + LB.separator + base : base;
       // Radbryts bara etiketter med text (x_y eller gruppnamn först), som func_graf_barchart
@@ -276,7 +339,9 @@
       if (LB.width && hasText) text = wrapText(text, LB.width);
       return text;
     }
-    function fmtTip(v) { return vgrD3.fmt(v, TT.decimals, " ") + TT.unit; }
+    // y_axis_format = "percent": andelen x 100 och " %" (eller tooltip_unit om den angetts)
+    function fmtTip(v) { return PCT ? fmtLabel(100 * v, TT.decimals) + (TT.unit || PCT_SUFFIX) : fmtTip0(v); }
+    function fmtTip0(v) { return vgrD3.fmt(v, TT.decimals, " ") + TT.unit; }
 
     function barFill(b) {
       if (!spec.has_groups) {
@@ -316,6 +381,7 @@
     // -------------------------------------------------------------------------
     function drawLegend(area) {
       var entries = spec.has_groups ? groups.map(function (g) { return { g: g, kind: "group" }; }) : [];
+      if (L.reverse) entries.reverse();   // legend_reverse
       if (refVisible()) entries.push({ g: { key: "__ref", label: REF.label, color: REF.color }, kind: "ref" });
       if (L.position === "none" || !entries.length) return;
       var key = pt(17.28), rowH = Math.max(L.text_size * 1.3, key + 2);
@@ -473,19 +539,39 @@
       // Axelmått (samma för alla paneler så att de linjerar)
       var catSize = HOR ? T.y_axis_text_size : T.x_axis_text_size;
       var valSize = HOR ? T.x_axis_text_size : T.y_axis_text_size;
-      var catLabW = 0, valLabW = 0;
+      var catLabW = 0, valLabW = 0, catLines = 1;
       panelInfo.forEach(function (pi) {
         var cl = pi.cats || X.tick_labels;
         cl.forEach(function (c) {
-          catLabW = Math.max(catLabW, vgrD3.measureText(svg, c, catSize, font, hlSet[c] ? "bold" : null));
+          // Kategoritext med flera rader (x_axis_text_wrap, "\n"): den bredaste raden och flest rader
+          var lines = pi.cats ? catTextLines(c) : [c];
+          catLines = Math.max(catLines, lines.length);
+          lines.forEach(function (s) {
+            catLabW = Math.max(catLabW, vgrD3.measureText(svg, s, catSize, font, hlSet[c] ? "bold" : null));
+          });
         });
+      });
+      var rad = X.angle * Math.PI / 180;
+      // Stående staplar: kategoritextens höjd under panelen (flera rader: radavstånd 1,2)
+      var catBlockH = catSize * (1 + 1.2 * (catLines - 1));
+      if (!HOR) {
+        var catBottomH = (X.angle > 0 ? catLabW * Math.sin(rad) + catBlockH * Math.cos(rad) : catBlockH) + pt(5);
+        // Etiketter utanför staplarna (flera rader) får plats i panelen (data_label_overflow = "expand"): panelens
+        // höjd är densamma för alla paneler och känd här, före värdeaxelns bredd som beror på domänen
+        var lenV = cellH - stripH - catBottomH;
+        var padShared = null;
+        panelInfo.forEach(function (pi) {
+          if (sharedY) { pi.vdom = padShared || (padShared = padForLabels(pi.vdom, domainBars, sharedAn, lenV)); }
+          else pi.vdom = padForLabels(pi.vdom, domainBars.filter(function (b) { return b.f === pi.f; }), null, lenV);
+        });
+      }
+      panelInfo.forEach(function (pi) {
         valueTicks(d3.scaleLinear().domain(pi.vdom)).forEach(function (tk) {
           valLabW = Math.max(valLabW, vgrD3.measureText(svg, tk.label, valSize, font));
         });
       });
-      var rad = X.angle * Math.PI / 180;
       var bottomLabW = HOR ? valLabW : catLabW, bottomLabSize = HOR ? valSize : catSize;
-      var bottomH = (X.angle > 0 ? bottomLabW * Math.sin(rad) + bottomLabSize * Math.cos(rad) : bottomLabSize) + pt(5);
+      var bottomH = HOR ? (X.angle > 0 ? bottomLabW * Math.sin(rad) + bottomLabSize * Math.cos(rad) : bottomLabSize) + pt(5) : catBottomH;
       var leftW = (HOR ? catLabW : valLabW) + pt(5);
       // Delad vänsteraxel (samma kategorier när liggande, samma värdeskala när stående): axeltexten bara i
       // första kolumnen och panelerna delar på den frigjorda bredden (som ggplot facet_wrap)
@@ -525,11 +611,13 @@
           ? [{ x: pi.cats[0], off: catLabel.offMin, half: catLabel.half },
              { x: pi.cats[pi.cats.length - 1], off: catLabel.offMax, half: catLabel.half }]
           : [];
-        var cs = HOR ? makeCatScale(pi.cats, rect.y1, rect.y0, needs) : makeCatScale(pi.cats, rect.x0, rect.x1, needs);
+        // reverse_categories: första kategorin överst (liggande) eller längst till höger (stående)
+        var cs = HOR ? (X.reverse ? makeCatScale(pi.cats, rect.y0, rect.y1, needs) : makeCatScale(pi.cats, rect.y1, rect.y0, needs))
+                     : (X.reverse ? makeCatScale(pi.cats, rect.x1, rect.x0, needs) : makeCatScale(pi.cats, rect.x0, rect.x1, needs));
         var vs = HOR ? d3.scaleLinear().domain(pi.vdom).range([rect.x0, rect.x1])
                      : d3.scaleLinear().domain(pi.vdom).range([rect.y1, rect.y0]);
         var vt = valueTicks(vs);
-        var catTicks = pi.cats ? pi.cats.map(function (c) { return { v: cs.pos(c), label: c, bold: !!hlSet[c] }; })
+        var catTicks = pi.cats ? pi.cats.map(function (c) { return { v: cs.pos(c), label: c, lines: catTextLines(c), bold: !!hlSet[c] }; })
                                : X.ticks.map(function (v, k) { return { v: v, label: X.tick_labels[k], bold: !!hlEnc[v] }; });
 
         // Rutnät och ram
@@ -553,14 +641,14 @@
             .attr("y1", vertical ? rect.y0 : p).attr("y2", vertical ? rect.y1 : p)
             .attr("stroke", color).attr("stroke-width", width);
         }
-        var GMIN = spec.grid.minor, GMAJ = spec.grid.major;
+        var GR = spec.grid, GMIN = GR.minor, GMAJ = GR.major;   // färg och tjocklek: grid_* (px)
         if (GMIN) {
-          for (var k = 1; k < vt.length; k++) gridLine((vt[k - 1].v + vt[k].v) / 2, true, "#f2f2f2", 0.7, GMIN);
-          if (X.minor) X.minor.forEach(function (v) { gridLine(v, false, "#f2f2f2", 0.7, GMIN); });
+          for (var k = 1; k < vt.length; k++) gridLine((vt[k - 1].v + vt[k].v) / 2, true, GR.minor_color, GR.minor_width, GMIN);
+          if (X.minor) X.minor.forEach(function (v) { gridLine(v, false, GR.minor_color, GR.minor_width, GMIN); });
         }
         if (GMAJ) {
-          vt.forEach(function (tk) { gridLine(tk.v, true, "#e5e5e5", 1.42, GMAJ); });
-          catTicks.forEach(function (tk) { gridLine(tk.v, false, "#e5e5e5", 1.42, GMAJ); });
+          vt.forEach(function (tk) { gridLine(tk.v, true, GR.major_color, GR.major_width, GMAJ); });
+          catTicks.forEach(function (tk) { gridLine(tk.v, false, GR.major_color, GR.major_width, GMAJ); });
         }
 
         // Staplar
@@ -645,7 +733,8 @@
           .attr("text-anchor", "end").attr("fill", "#4d4d4d")
           .style("font-size", (HOR ? catSize : valSize) + "px").style("font-family", font)
           .style("font-weight", function (tk) { return tk.bold ? "bold" : null; })
-          .text(function (tk) { return tk.label; });
+          .text(function (tk) { return tk.label; })
+          .call(splitLines, function () { return rect.x0 - pt(3); }, function (n) { return (0.35 - (n - 1) * 0.6) + "em"; });
         var bl = axes.selectAll(null).data(bottomTicks).enter().append("text")
           .attr("fill", "#4d4d4d").style("font-size", bottomLabSize + "px").style("font-family", font)
           .style("font-weight", function (tk) { return tk.bold ? "bold" : null; })
@@ -653,10 +742,11 @@
         if (X.angle > 0) {
           bl.attr("text-anchor", "end").attr("dy", "0.71em").attr("transform", function (tk) {
             return "translate(" + bottomScale(tk.v) + "," + (rect.y1 + pt(3)) + ") rotate(" + (-X.angle) + ")";
-          });
+          }).call(splitLines, function () { return 0; }, function () { return "0.71em"; });
         } else {
           bl.attr("text-anchor", "middle").attr("x", function (tk) { return bottomScale(tk.v); })
-            .attr("y", rect.y1 + pt(3)).attr("dy", "0.85em");
+            .attr("y", rect.y1 + pt(3)).attr("dy", "0.85em")
+            .call(splitLines, function (tk) { return bottomScale(tk.v); }, function () { return "0.85em"; });
         }
 
         // Dataetiketter — ritas när staplarna har landat
@@ -678,7 +768,8 @@
               color: LB.color === "auto" ? (isTotalLabel(b) ? "#000000" : groupByKey[b.g].color) : LB.color,
               ax: HOR ? v : c, ay: HOR ? c : v, x: HOR ? v : c, y: HOR ? c : v,
               ox: HOR ? vs(b.v1) : c, oy: HOR ? c : vs(b.v1),
-              alignStart: out ? (sign >= 0 ? 1 : -1) : 0
+              alignStart: out ? (sign >= 0 ? 1 : -1) : 0,
+              end: vs(b.stacked ? b.end : b.v1)   // stapelns ände i px (data_label_overflow = "inside")
             };
           });
           var nodes = vgrD3.labelNodes(labG, items, { size: LB.size, font: font, box: LB.box, box_color: LB.box_color, box_alpha: 1 });
@@ -689,6 +780,23 @@
             if (HOR) { d.x += d.alignStart * d.w / 2; d.ax = d.x; }
             else { d.y -= d.alignStart * d.h / 2; d.ay = d.y; }
           });
+          // data_label_overflow = "inside": en etikett utanför stapeln som inte ryms i panelen läggs inuti stapelns
+          // ände, i data_label_inside_color (med data_label_box behålls textfärgen, rutan ger kontrasten). Bara om
+          // stapeln är längre än etiketten
+          if (LB.overflow === "inside") {
+            var zero = vs(0);
+            items.forEach(function (d) {
+              var s = d.alignStart;
+              if (!s) return;
+              var fits = HOR ? (s > 0 ? d.x + d.w / 2 <= rect.x1 : d.x - d.w / 2 >= rect.x0)
+                             : (s > 0 ? d.y - d.h / 2 >= rect.y0 : d.y + d.h / 2 <= rect.y1);
+              if (fits || Math.abs(d.end - zero) < (HOR ? d.w : d.h) + pt(4)) return;
+              d.inside = true;
+              if (HOR) d.x = d.end - s * (pt(2) + d.w / 2); else d.y = d.end + s * (pt(2) + d.h / 2);
+              d.ax = d.x; d.ay = d.y;
+            });
+            if (!LB.box) nodes.g.filter(function (d) { return d.inside; }).select("text").attr("fill", LB.inside_color);
+          }
           if (repelOn) {
             vgrD3.relaxLabels(items, rect, { sep: LB.force * pt(2), direction: "both", maxOverlaps: LB.max_overlaps });
             vgrD3.leaderLines(labG, items, { color: "#7f7f7f", width: 0.85 });
@@ -741,7 +849,8 @@
       hoverG.append("rect").attr("x", bb.x).attr("y", bb.y).attr("width", bb.width).attr("height", bb.height)
         .attr("fill", "none").attr("stroke", "#263238").attr("stroke-width", 2);
       if (!TT.show) return;
-      var html = "<div class='vgr-tt-title'>" + esc(b.r.xt) + "</div>";
+      // Rubrik: tooltip_x_format (r.xl) eller x-värdet; radbrytningar i kategorinamnet blir mellanslag
+      var html = "<div class='vgr-tt-title'>" + esc(String(b.r.xl != null ? b.r.xl : b.r.xt).replace(/\n/g, " ")) + "</div>";
       var sub = [];
       if (hasFacets) sub.push(facet);
       if (spec.filter.enabled) sub.push(state.filter);

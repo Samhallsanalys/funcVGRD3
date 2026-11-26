@@ -36,6 +36,7 @@ hjälpsidor, t.ex. \code{\link[=func_d3_karta]{func_d3_karta()}}):\tabular{lll}{
    \code{unit} \tab \code{legend_unit} \tab täthetskarta \cr
    \code{direct} \tab \code{legend_direct} \tab linjediagram \cr
    \code{title_size} \tab \code{legend_title_size} \tab stapeldiagram, hanteldiagram \cr
+   \code{reverse} \tab \code{legend_reverse} \tab linjediagram, ytdiagram, stapeldiagram \cr
 }
 }
 \examples{

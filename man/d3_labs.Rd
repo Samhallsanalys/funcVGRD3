@@ -19,7 +19,7 @@ Sätter diagrammets texter: \code{title}, \code{subtitle}, \code{caption}, \code
 \details{
 Lagret tar egentligen vilka parametrar som helst med fullständiga namn, precis som
 \code{\link[=d3_params]{d3_params()}}; namnet visar vad det är tänkt för. Alla diagramtyper har \code{title},
-\code{subtitle}, \code{caption} och \code{legend_title}; axeltitlarna finns i linje-, stapel-,
+\code{subtitle}, \code{caption} och \code{legend_title}; axeltitlarna finns i linje-, yt-, stapel-,
 hantel-, spridnings- och lådagram samt histogram.
 }
 \examples{

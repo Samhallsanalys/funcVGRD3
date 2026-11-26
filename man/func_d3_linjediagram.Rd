@@ -119,6 +119,14 @@ func_d3_linjediagram(
   animation_duration = 900,
   width = 1400,
   height = 800,
+  y_axis_expand = NULL,
+  y_axis_format = "number",
+  grid_major_color = "#e5e5e5",
+  grid_minor_color = "#f2f2f2",
+  grid_major_width = 0.5,
+  grid_minor_width = 0.25,
+  tooltip_x_format = NULL,
+  legend_reverse = FALSE,
   .rendera = FALSE
 )
 }
@@ -427,6 +435,30 @@ krymper för att få plats i fönstret.}
 
 \item{height}{Diagrammets höjd i pixlar.}
 
+\item{y_axis_expand}{Luft på y-axeln utanför data och \code{y_axis_min}/\code{y_axis_max}, som
+andel av spannet: \code{c(nedre, övre)}, som \code{ggplot2::expansion(mult = ...)}. \code{NULL}
+(standard) ger 5 \% nedtill och 15 \% upptill.}
+
+\item{y_axis_format}{Y-axelns format: \code{"number"} (standard) eller \code{"percent"} för
+andelar mellan 0 och 1, som visas som procent ("82 \%") på axeln, i tooltipen och i
+etiketterna. \code{y_axis_min}, \code{y_axis_max} och \code{y_break_line} anges då som andelar.
+Gäller värdeläget, inte index och förändring.}
+
+\item{grid_major_color}{Färg på de större stödlinjerna.}
+
+\item{grid_minor_color}{Färg på de mindre stödlinjerna.}
+
+\item{grid_major_width}{Tjocklek på de större stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{grid_minor_width}{Tjocklek på de mindre stödlinjerna (ggplot2:s \code{linewidth}).}
+
+\item{tooltip_x_format}{Hur x-värdet skrivs som rubrik i tooltipen: ett datumformat
+(strftime) för en datumaxel, t.ex. \code{"\%Y"}, eller en funktion som tar x-värdena och
+returnerar text, t.ex. \code{function(x) paste(x, "år")}. \code{NULL} (standard) ger
+\code{as.character()} av x-värdet.}
+
+\item{legend_reverse}{\code{TRUE} visar förklaringen i omvänd ordning.}
+
 \item{.rendera}{Intern. \code{TRUE} bygger diagrammet och används när objektet skrivs ut.
 Ändra inte.}
 }
@@ -500,12 +532,23 @@ p4 <- func_d3_linjediagram(syss[syss$kommun != "Göteborg", ], x_value = "ar", y
                            x_shade_from = 2020, x_shade_to = 2021, x_shade_label = "Pandemin")
 if (interactive()) p4
 
+# Andelen kvinnor (0–1) som procent, med mer luft under linjerna, egna färger på
+# stödlinjerna och "År 2020" som rubrik i tooltipen
+syss$andel_kvinnor <- syss$kvinnor / syss$antal
+p5 <- func_d3_linjediagram(syss, x_value = "ar", y_value = "andel_kvinnor", group = "kommun",
+                           y_axis_format = "percent", y_axis_expand = c(0.2, 0.15),
+                           show_major_grid = TRUE, grid_major_color = "#bdbdbd",
+                           tooltip_x_format = function(x) paste("År", x), legend_position = "right")
+if (interactive()) p5
+
 # Spara alla diagram ovan i samma fristående HTML-fil (här i en temporär katalog).
 # Namnen i listan blir rubriker i filen.
 func_d3_spara(list("En kommun" = p1, "En linje per kommun" = p2,
-                   "Två kommuner framhävda" = p3, "Prognos och skuggad period" = p4),
+                   "Två kommuner framhävda" = p3, "Prognos och skuggad period" = p4,
+                   "Andel i procent" = p5),
               tempfile(fileext = ".html"))
 }
 \seealso{
-\code{\link[=func_d3_stapeldiagram]{func_d3_stapeldiagram()}}, \code{\link[=d3_plot]{d3_plot()}} och \code{\link[=func_d3_spara]{func_d3_spara()}}.
+\code{\link[=func_d3_stapeldiagram]{func_d3_stapeldiagram()}}, \code{\link[=func_d3_ytdiagram]{func_d3_ytdiagram()}}, \code{\link[=d3_plot]{d3_plot()}} och
+\code{\link[=func_d3_spara]{func_d3_spara()}}.
 }
